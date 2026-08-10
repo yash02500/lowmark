@@ -1,0 +1,20 @@
+import User from "./User";
+import Product from "./product";
+import UserProduct from "./userProduct";
+
+User.hasMany(UserProduct, {
+    foreignKey: "userId",
+});
+
+UserProduct.belongsTo(User, {
+    foreignKey: "userId",
+});
+
+Product.hasMany(UserProduct, {
+    foreignKey: "productId",
+});
+
+UserProduct.belongsTo(Product, {
+    foreignKey: "productId",
+    as: "product",
+});

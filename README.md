@@ -16,4 +16,4 @@ AI-powered product price tracker that helps users monitor prices, receive smart 
 
 ## Status
 
-🚧 Under Development
+Under Development

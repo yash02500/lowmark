@@ -1,14 +1,14 @@
 import Product from "../models/product";
 
 const createProduct = async (productData: {
-    url: string;
-    title: string;
-    imageUrl?: string;
-    currentPrice: number;
-    platform: string;
-    currency?: string;
+  url: string;
+  title: string;
+  imageUrl?: string;
+  currentPrice: number;
+  platform: string;
+  currency?: string;
 }) => {
-    return await Product.create(productData);
+  return await Product.create(productData);
 };
 
 const findProductById = async (id: number) => {
@@ -33,10 +33,23 @@ const deleteProduct = async (id: number) => {
   });
 };
 
+const updateProductPrice = async (
+  id: number,
+  currentPrice: number
+) => {
+  return await Product.update(
+    { currentPrice },
+    {
+      where: { id },
+    }
+  );
+};
+
 export default {
-    createProduct,
-    findProductById,
-    findProductByUrl,
-    findAllProducts,
-    deleteProduct,
+  createProduct,
+  findProductById,
+  findProductByUrl,
+  findAllProducts,
+  deleteProduct,
+  updateProductPrice,
 }

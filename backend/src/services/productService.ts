@@ -1,14 +1,27 @@
 import productRepository from "../repositories/productRepository";
+import detectPlatform from "../scrapers/platformDetector";
+import scraperService from "./scraperService";
 
-const createProduct = async (productData: {
-    url: string;
-    title: string;
-    imageUrl?: string;
-    currentPrice: number;
-    platform: string;
-    currency?: string;
-}) => {
-    const product = await productRepository.createProduct(productData);
+const createProduct = async (productData: {url: string;}) => {
+
+    const { url } = productData;
+    const existingProduct = await productRepository.findProductByUrl(url);
+
+    if(existingProduct) {
+        throw new Error("Product already exist");
+    }
+
+    const scrapedData = await scraperService.scrapeProduct(url);
+
+    const product = await productRepository.createProduct({
+        url,
+        title: scrapedData.title,
+        imageUrl: scrapedData.imageUrl,
+        currentPrice: scrapedData.price,
+        currency: scrapedData.currency,
+        platform: detectPlatform(url),
+    });
+
     return product;
 };
 

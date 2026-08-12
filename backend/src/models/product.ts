@@ -10,8 +10,9 @@ const Product = sequelize.define("Product", {
     },
 
     url: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
+      unique: true,
     },
 
     title: {

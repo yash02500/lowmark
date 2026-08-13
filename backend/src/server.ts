@@ -2,7 +2,6 @@ import "dotenv/config"
 import "./models/associations";
 import app from "./app";
 import sequelize from "./config/database";
-import startPriceCheckJob from "./jobs/priceCheckJob";
 
 const PORT =  process.env.PORT || 5000;
 
@@ -13,7 +12,6 @@ const startServer = async () => {
 
         app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
-            startPriceCheckJob();
         });
     } catch (error) {
         console.log("Unable to connect to database", error);

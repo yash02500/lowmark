@@ -67,10 +67,25 @@ const deleteUserProduct = async (
     });
 };
 
+const findActiveUserProducts = async () => {
+    return await UserProduct.findAll({
+        where: {
+            isActive: true,
+        },
+        include: [
+            {
+                model: Product,
+                as: "product",
+            },
+        ],
+    });
+};
+
 export default {
     createUserProduct,
     findUserProduct,
     findUserProducts,
     findUserProductById,
     deleteUserProduct,
+    findActiveUserProducts
 };

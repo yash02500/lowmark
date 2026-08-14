@@ -1,7 +1,9 @@
+import schedulingService from "./schedulingService";
 import productRepository from "../repositories/productRepository";
 import scraperService from "./scraperService";
 import normalizeProductUrl from "../utils/normalizeProductUrl";
 import priceHistoryService from "./priceHistoryService";
+import userProductRepository from "../repositories/userProductRepository";
 
 const createProduct = async (productData: { url: string; }) => {
 
@@ -14,6 +16,12 @@ const createProduct = async (productData: { url: string; }) => {
     }
 
     const scrapedData = await scraperService.scrapeProduct(url);
+
+    if (scrapedData.price === null) {
+        throw new Error(
+            `Product is ${scrapedData.availability} and has no price`
+        );
+    }
 
     const product = await productRepository.createProduct({
         url: normalizedUrl,
@@ -66,14 +74,83 @@ const updateProductPrice = async (productId: number) => {
     const url = product.getDataValue("url");
     const scrapedData = await scraperService.scrapeProduct(url);
     const currentPrice = Number(product.getDataValue("currentPrice"));
+    const now = new Date();
+    const createdAt = product.getDataValue("createdAt") as Date;
+    const isNew = now.getTime() - createdAt.getTime() <= 24 * 60 * 60 * 1000;
+    const userProducts = await userProductRepository.findActiveUserProductsByProductId(productId);
 
+    const targetPrices = userProducts
+        .map((userProduct) =>
+            userProduct.get("targetPrice")
+        )
+        .filter(
+            (targetPrice): targetPrice is number =>
+                targetPrice !== null &&
+                targetPrice !== undefined
+        )
+        .map(Number);
+
+    // If there is no price, don't use it for target-price comparison
+    const targetPriceClose = scrapedData.price !== null &&
+        schedulingService.isTargetPriceClose(
+            scrapedData.price,
+            targetPrices
+        );
+
+    const priceChangeCount = await priceHistoryService.getRecentPriceChangeCount(productId);
+    const stableForWeeks = await priceHistoryService.isStableForWeeks(productId);
+
+    // Use the NEW availability returned by the scraper
+    const trackingState = scrapedData.availability;
+
+    const interval = schedulingService.getCheckIntervalMinutes({
+        isNew,
+        priceChangeCount,
+        targetPriceClose,
+        stableForWeeks,
+        trackingState,
+    });
+
+    const nextCheckAt = schedulingService.calculateNextCheckAt(
+        interval,
+        now
+    );
+
+    // Always update scheduling state,
+    // even when the product has no current price.
+    await productRepository.updateScheduling(
+        productId,
+        {
+            lastCheckedAt: now,
+            nextCheckAt,
+            checkIntervalMinutes: interval,
+            priority: product.getDataValue("priority"),
+            trackingState,
+        }
+    );
+
+    // Product has no price, for example out of stock.
+    // Keep the existing currentPrice in the database.
+    if (scrapedData.price === null) {
+        return {
+            changed: false,
+            product,
+            nextCheckAt,
+            checkIntervalMinutes: interval,
+        };
+    }
+
+    // Price did not change
     if (currentPrice === scrapedData.price) {
         return {
             changed: false,
             product,
+            nextCheckAt,
+            checkIntervalMinutes: interval,
         };
     }
 
+    // Price changed
     await productRepository.updateProductPrice(
         productId,
         scrapedData.price
@@ -84,12 +161,16 @@ const updateProductPrice = async (productId: number) => {
         scrapedData.price
     );
 
-    const updatedProduct = await productRepository.findProductById(productId);
+    const updatedProduct = await productRepository.findProductById(
+        productId
+    );
 
     return {
         changed: true,
         recorded: priceHistoryResult.recorded,
         product: updatedProduct,
+        nextCheckAt,
+        checkIntervalMinutes: interval,
     };
 };
 

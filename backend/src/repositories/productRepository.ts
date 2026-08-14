@@ -1,4 +1,5 @@
 import Product from "../models/product";
+import { Op } from "sequelize";
 
 const createProduct = async (productData: {
   url: string;
@@ -45,6 +46,37 @@ const updateProductPrice = async (
   );
 };
 
+const findProductsDueForCheck = async () => {
+  return await Product.findAll({
+    where: {
+      nextCheckAt: {
+        [Op.lte]: new Date(),
+      },
+    },
+    order: [
+      ["priority", "DESC"],
+      ["nextCheckAt", "ASC"],
+    ],
+  });
+};
+
+const updateScheduling = async (
+  productId: number,
+  data: {
+    lastCheckedAt: Date;
+    nextCheckAt: Date;
+    checkIntervalMinutes: number;
+    priority: number;
+    trackingState: string;
+  }
+) => {
+  return await Product.update(data, {
+    where: {
+      id: productId,
+    },
+  });
+};
+
 export default {
   createProduct,
   findProductById,
@@ -52,4 +84,6 @@ export default {
   findAllProducts,
   deleteProduct,
   updateProductPrice,
+  findProductsDueForCheck,
+  updateScheduling
 }

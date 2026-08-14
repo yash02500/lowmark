@@ -27,18 +27,35 @@ class AmazonScraper implements ProductScraper {
                 throw new Error("Unable to extract product image");
             }
 
+            let availability: "in_stock" | "out_of_stock" | "discontinued";
+            const unavailableText = await page.locator("#availability").textContent();
+
+            if (
+                unavailableText &&
+                /currently unavailable|out of stock/i.test(unavailableText)
+            ) {
+                availability = "out_of_stock";
+            } else {
+                availability = "in_stock";
+            }
+
+            let price: number | null = null;
             const priceText = await page.locator(".a-price .a-offscreen").first().textContent();
 
-            if (!priceText) {
-                throw new Error("Unable to extract product price");
+            if (priceText) {
+                price = Number(priceText.replace(/[^d.]/g, ""));
+
+                if(Number.isNaN(price)) {
+                    price = null;
+                }
             }
-            const price = Number(priceText.replace(/[^\d.]/g,""));
 
             return {
                 title: title.trim(),
                 imageUrl: image,
                 price,
                 currency: "INR",
+                availability,
             };
         } finally {
             await browser.close();

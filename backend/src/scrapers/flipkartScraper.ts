@@ -15,6 +15,22 @@ class FlipkartScraper implements ProductScraper {
                 timeout: 30000,
             });
 
+            const pagetext = await page.locator("body").innerText();
+
+            if (
+                /page you are looking for has been moved or deleted/i.test(
+                    pagetext
+                )
+            ) {
+                return {
+                    title: "",
+                    imageUrl: "",
+                    price: null,
+                    currency: "INR",
+                    availability: "discontinued",
+                };
+            }
+
             const title = await page.locator("h1").textContent();
 
             if (!title) {
@@ -27,16 +43,29 @@ class FlipkartScraper implements ProductScraper {
                 throw new Error("Unable to extract product image");
             }
 
-            const priceText = await page.locator('div').filter({ hasText: /^₹[\d,]+$/ }).first().textContent();
+            let availability: "in_stock" | "out_of_stock" | "discontinued";
+            const pageText = await page.locator("body").textContent();
 
-            if (!priceText) {
-                throw new Error("Unable to extract product price");
+            if (
+                /out of stock|currently unavailable|sold out/i.test(pagetext)
+            ) {
+                availability = "out_of_stock";
+            } else {
+                availability = "in_stock";
             }
 
-            const price = Number(priceText.replace(/[^\d.]/g, ""));
+            const priceText = await page.locator('div').filter({ hasText: /^₹[\d,]+$/ }).first().textContent();
 
-            if (Number.isNaN(price)) {
-                throw new Error("Invalid product price");
+            let price: number | null = null;
+
+            if (priceText) {
+                price = Number(
+                    priceText.replace(/[^\d.]/g, "")
+                );
+
+                if (Number.isNaN(price)) {
+                    price = null;
+                }
             }
 
             return {
@@ -44,6 +73,7 @@ class FlipkartScraper implements ProductScraper {
                 imageUrl: image,
                 price,
                 currency: "INR",
+                availability,
             };
         } finally {
             await browser.close();

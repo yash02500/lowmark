@@ -26,8 +26,22 @@ const findLatestPrice = async (productId: number) => {
     });
 };
 
+const findRecentPriceHistory = async (
+    productId: number,
+    limit: number
+) => {
+    return await PriceHistory.findAll({
+        where: {
+            productId,
+        },
+        order: [["recordedAt", "DESC"]],
+        limit,
+    });
+};
+
 export default {
     createPriceHistory,
     findPriceHistoryByProductId,
     findLatestPrice,
+    findRecentPriceHistory,
 };

@@ -81,11 +81,23 @@ const findActiveUserProducts = async () => {
     });
 };
 
+const findActiveUserProductsByProductId = async (
+    productId: number
+) => {
+    return await UserProduct.findAll({
+        where: {
+            productId,
+            isActive: true,
+        },
+    });
+};
+
 export default {
     createUserProduct,
     findUserProduct,
     findUserProducts,
     findUserProductById,
     deleteUserProduct,
-    findActiveUserProducts
+    findActiveUserProducts,
+    findActiveUserProductsByProductId,
 };

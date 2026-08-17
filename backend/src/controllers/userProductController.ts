@@ -1,100 +1,211 @@
 import { Request, Response } from "express";
 import userProductService from "../services/userProductService";
+import productInsightService from "../services/productInsightService";
+import { trackProductSchema, userProductIdParamSchema } from "../validations/userProductValidation";
 
 const trackProduct = async (req: Request, res: Response) => {
     try {
         const userId = req.userId!;
+        const validationResult = trackProductSchema.safeParse(req.body);
 
-        const { productId, targetPrice } = req.body;
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
 
-        const userProduct = await userProductService.trackProduct(
-            userId,
-            Number(productId),
-            targetPrice
-        );
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
 
-        return res.status(201).json({
-            success: true,
-            message: "Product tracked successfully",
-            data: userProduct,
-        });
-    } catch (error: any) {
-        return res.status(400).json({
-            success: false,
-            message: error.message,
-        });
-    }
-};
+            const { productId, targetPrice } = validationResult.data;
 
-const getTrackedProducts = async (req: Request, res: Response) => {
-    try {
-        const userId = req.userId!;
+            const userProduct = await userProductService.trackProduct(
+                userId,
+                Number(productId),
+                targetPrice
+            );
 
-        const products =
-            await userProductService.getTrackedProducts(userId);
+            return res.status(201).json({
+                success: true,
+                message: "Product tracked successfully",
+                data: userProduct,
+            });
+        } catch (error: any) {
+            return res.status(400).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
 
-        return res.status(200).json({
-            success: true,
-            message: "Tracked products fetched successfully",
-            data: products,
-        });
-    } catch (error: any) {
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-};
+    const getTrackedProducts = async (req: Request, res: Response) => {
+        try {
+            const userId = req.userId!;
+            const products = await userProductService.getTrackedProducts(userId);
 
-const getTrackedProductById = async (req: Request, res: Response) => {
-    try {
-        const userId = req.userId!;
-        const id = Number(req.params.id);
+            return res.status(200).json({
+                success: true,
+                message: "Tracked products fetched successfully",
+                data: products,
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
 
-        const product =
-            await userProductService.getTrackedProductById(
+    const getTrackedProductById = async (req: Request, res: Response) => {
+        try {
+            const userId = req.userId!;
+
+            const validationResult = userProductIdParamSchema.safeParse(req.params);
+
+            if (!validationResult.success) {
+                const errors = validationResult.error.issues.map((err: any) => ({
+                    field: err.path.join('.'),
+                    message: err.message,
+                }));
+
+                return res.status(400).json({
+                    success: false,
+                    message: "Validation failed",
+                    errors,
+                });
+            }
+
+            const { id } = validationResult.data;
+            const product = await userProductService.getTrackedProductById(id, userId);
+
+            return res.status(200).json({
+                success: true,
+                message: "Tracked product fetched successfully",
+                data: product,
+            });
+        } catch (error: any) {
+            return res.status(404).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
+
+    const untrackProduct = async (req: Request, res: Response) => {
+        try {
+            const userId = req.userId!;
+            const validationResult = userProductIdParamSchema.safeParse(req.params);
+
+            if (!validationResult.success) {
+                const errors = validationResult.error.issues.map(err => ({
+                    field: err.path.join('.'),
+                    message: err.message,
+                }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+            const { id } = validationResult.data;
+
+            await userProductService.untrackProduct(
                 id,
                 userId
             );
 
-        return res.status(200).json({
-            success: true,
-            message: "Tracked product fetched successfully",
-            data: product,
-        });
-    } catch (error: any) {
-        return res.status(404).json({
-            success: false,
-            message: error.message,
-        });
-    }
-};
+            return res.status(200).json({
+                success: true,
+                message: "Product untracked successfully",
+            });
+        } catch (error: any) {
+            return res.status(404).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
 
-const untrackProduct = async (req: Request, res: Response) => {
-    try {
-        const userId = req.userId!;
-        const id = Number(req.params.id);
+    const getInsights = async (req: Request, res: Response) => {
+        try {
+            const userId = req.userId!;
+            const insights = await productInsightService.getUserProductsInsight(userId);
 
-        await userProductService.untrackProduct(
-            id,
-            userId
-        );
+            return res.status(200).json({
+                success: true,
+                message: "Product insights generated successfully",
+                data: insights,
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
 
-        return res.status(200).json({
-            success: true,
-            message: "Product untracked successfully",
-        });
-    } catch (error: any) {
-        return res.status(404).json({
-            success: false,
-            message: error.message,
-        });
-    }
-};
+    const getAttention = async (req: Request, res: Response) => {
+        try {
+            const userId = req.userId!;
+            const attention = await productInsightService.getUserProductAttention(userId);
 
-export default {
-    trackProduct,
-    getTrackedProducts,
-    getTrackedProductById,
-    untrackProduct,
-};
+            return res.status(200).json({
+                success: true,
+                message: "Product attention insights generated successfully",
+                data: attention,
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
+
+    const getProductInsightById = async (req: Request, res: Response) => {
+        try {
+            const userId = req.userId!;
+            const validationResult = userProductIdParamSchema.safeParse(req.params);
+
+            if (!validationResult.success) {
+                const errors = validationResult.error.issues.map(err => ({
+                    field: err.path.join('.'),
+                    message: err.message,
+                }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+            const { id } = validationResult.data;
+            const insight = await productInsightService.getUserProductInsightById(id, userId);
+
+            return res.status(200).json({
+                success: true,
+                message: "Product summary generated successfully",
+                data: insight,
+            });
+        } catch (error: any) {
+            return res.status(404).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
+
+    export default {
+        trackProduct,
+        getTrackedProducts,
+        getTrackedProductById,
+        untrackProduct,
+        getInsights,
+        getAttention,
+        getProductInsightById,
+    };

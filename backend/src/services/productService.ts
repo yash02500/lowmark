@@ -71,6 +71,7 @@ const updateProductPrice = async (productId: number) => {
         throw new Error("Product not found");
     }
 
+    const previousTrackingState = product.getDataValue("trackingState");
     const url = product.getDataValue("url");
     const scrapedData = await scraperService.scrapeProduct(url);
     const currentPrice = Number(product.getDataValue("currentPrice"));
@@ -134,9 +135,17 @@ const updateProductPrice = async (productId: number) => {
     if (scrapedData.price === null) {
         return {
             changed: false,
+            previousPrice: currentPrice,
+            currentPrice: null,
+            availabilityChanged: previousTrackingState !== trackingState,
+            previousTrackingState,
+            currentTrackingState: trackingState,
             product,
+            userProducts,
             nextCheckAt,
             checkIntervalMinutes: interval,
+            priceDropped: false,
+            priceIncreased: false,
         };
     }
 
@@ -167,8 +176,16 @@ const updateProductPrice = async (productId: number) => {
 
     return {
         changed: true,
+        previousPrice: currentPrice,
+        currentPrice: scrapedData.price,
+        priceDropped: scrapedData.price < currentPrice,
+        priceIncreased: scrapedData.price > currentPrice,
+        availabilityChanged: previousTrackingState !== trackingState,
+        previousTrackingState,
+        currentTrackingState: trackingState,
         recorded: priceHistoryResult.recorded,
         product: updatedProduct,
+        userProducts,
         nextCheckAt,
         checkIntervalMinutes: interval,
     };

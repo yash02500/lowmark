@@ -15,24 +15,45 @@ class AmazonScraper implements ProductScraper {
                 timeout: 30000,
             });
 
-            const title = await page.locator("span#productTitle").textContent();
+            // Give Amazon a short moment to render the product page
+            await page.waitForTimeout(2000);
+
+            const titleLocator = page.locator("span#productTitle");
+
+            let title = await titleLocator
+                .first()
+                .textContent({ timeout: 5000 })
+                .catch(() => null);
 
             if (!title) {
-                throw new Error("Unable to extract product title");
+                throw new Error(
+                    "Unable to extract Amazon product title. Amazon may have blocked the request or changed the page."
+                );
             }
 
-            const image = await page.locator("#landingImage").getAttribute("src");
+            const image = await page
+                .locator("#landingImage")
+                .getAttribute("src", { timeout: 5000 })
+                .catch(() => null);
 
             if (!image) {
-                throw new Error("Unable to extract product image");
+                throw new Error(
+                    "Unable to extract Amazon product image."
+                );
             }
 
             let availability: "in_stock" | "out_of_stock" | "discontinued";
-            const unavailableText = await page.locator("#availability").textContent();
+
+            const unavailableText = await page
+                .locator("#availability")
+                .textContent({ timeout: 5000 })
+                .catch(() => null);
 
             if (
                 unavailableText &&
-                /currently unavailable|out of stock/i.test(unavailableText)
+                /currently unavailable|out of stock/i.test(
+                    unavailableText
+                )
             ) {
                 availability = "out_of_stock";
             } else {
@@ -40,12 +61,19 @@ class AmazonScraper implements ProductScraper {
             }
 
             let price: number | null = null;
-            const priceText = await page.locator(".a-price .a-offscreen").first().textContent();
+
+            const priceText = await page
+                .locator(".a-price .a-offscreen")
+                .first()
+                .textContent({ timeout: 5000 })
+                .catch(() => null);
 
             if (priceText) {
-                price = Number(priceText.replace(/[^d.]/g, ""));
+                price = Number(
+                    priceText.replace(/[^\d.]/g, "")
+                );
 
-                if(Number.isNaN(price)) {
+                if (Number.isNaN(price)) {
                     price = null;
                 }
             }

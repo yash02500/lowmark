@@ -1,21 +1,37 @@
 import { Worker } from "bullmq";
 import redisConnection from "../config/redis";
 import productService from "../services/productService";
+import notificationService from "../services/notificationService";
 
 const priceCheckWorker = new Worker(
     "price-check",
     async (job) => {
         const { productId } = job.data;
+        console.log(`Processing price check for product ${productId}`);
+        const result = await productService.updateProductPrice(productId);
+        console.log("Price check result:", {
+            productId,
+            previousPrice: result.previousPrice,
+            currentPrice: result.currentPrice,
+            priceDropped: result.priceDropped,
+            priceIncreased: result.priceIncreased,
+            previousTrackingState: result.previousTrackingState,
+            currentTrackingState: result.currentTrackingState,
+        });
 
-        console.log(
-            `Processing price check for product ${productId}`
-        );
+        await notificationService.queueNotifications({
+            productId,
+            previousPrice: result.previousPrice!,
+            currentPrice: result.currentPrice!,
+            priceDropped: result.priceDropped,
+            priceIncreased: result.priceIncreased,
+            previousTrackingState: result.previousTrackingState,
+            currentTrackingState: result.currentTrackingState!,
+            userProducts: result.userProducts!,
+            product: result.product,
+        });
 
-        await productService.updateProductPrice(productId);
-
-        console.log(
-            `Price check completed for product ${productId}`
-        );
+        console.log(`Price check completed for product ${productId}`);
     },
     {
         connection: redisConnection,
@@ -36,12 +52,9 @@ priceCheckWorker.on("failed", (job, error) => {
 
 const shutdown = async () => {
     console.log("Shutting down price check worker...");
-
     await priceCheckWorker.close();
     await redisConnection.quit();
-
     console.log("Price check worker shut down");
-
     process.exit(0);
 };
 

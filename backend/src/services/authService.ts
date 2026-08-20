@@ -54,7 +54,7 @@ const login = async (userData: LoginInput) => {
         { userId: user.get("id") },
         jwtSecret,
         {
-            expiresIn: "15m",
+            expiresIn: "60m",
         }
     );
 

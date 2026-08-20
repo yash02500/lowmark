@@ -1,6 +1,5 @@
 import UserProduct from "../models/userProduct";
 import Product from "../models/product";
-import { Model } from "sequelize";
 
 const createUserProduct = async (userProductData: {
     userId: number;

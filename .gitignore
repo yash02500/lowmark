@@ -1,28 +1,91 @@
+# LOWMARK - ROOT GITIGNORE
+
+# ============================================
+# BACKEND
+# ============================================
+
+backend/node_modules/
+
+# Backend environment files
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Backend logs
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/pnpm-debug.log*
+
+# Backend coverage
+backend/coverage/
+
+# ============================================
+# FRONTEND
+# ============================================
+
 # Dependencies
-node_modules/
+frontend/node_modules/
 
-# Environment
-.env
-.env.*
+# Yarn / PnP
+frontend/.pnp
+frontend/.pnp.*
+frontend/.yarn/
 
-# Build
-dist/
-build/
+# Next.js
+frontend/.next/
+frontend/out/
 
-# Logs
-logs/
+# Production build
+frontend/build/
+
+# Frontend environment files
+frontend/.env*
+!frontend/.env.example
+
+# Vercel
+frontend/.vercel/
+
+# TypeScript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# Frontend coverage
+frontend/coverage/
+
+# ============================================
+# LOG FILES
+# ============================================
+
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# IDE
-.vscode/
+# ============================================
+# GENERAL
+# ============================================
+
+.DS_Store
+*.pem
+
+# ============================================
+# IDE / EDITOR
+# ============================================
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
 .idea/
 
+*.swp
+*.swo
+
+# ============================================
 # OS
-.DS_Store
+# ============================================
+
 Thumbs.db
-
-# Coverage
-coverage/
-
-# Prisma
-backend/sequelize/dev.db
+Desktop.ini

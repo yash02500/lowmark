@@ -2,6 +2,7 @@ import User from "./User";
 import Product from "./product";
 import UserProduct from "./userProduct";
 import PriceHistory from "./priceHistory";
+import AIProviderUsage from "./aiProviderUsage";
 
 User.hasMany(UserProduct, {
     foreignKey: "userId",

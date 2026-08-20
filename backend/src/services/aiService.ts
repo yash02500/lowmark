@@ -1,8 +1,23 @@
 import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import aiProviderState from "./aiProviderState";
+import dotenv from "dotenv";
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+dotenv.config();
+
+const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+const geminiApiKey = process.env.GEMINI_API_KEY;
+
+const openRouter = openRouterApiKey
+    ? new OpenAI({
+          apiKey: openRouterApiKey,
+          baseURL: "https://openrouter.ai/api/v1",
+      })
+    : null;
+
+const gemini = geminiApiKey
+    ? new GoogleGenerativeAI(geminiApiKey)
+    : null;
 
 class AIServiceError extends Error {
     constructor(message: string) {
@@ -10,6 +25,145 @@ class AIServiceError extends Error {
         this.name = "AIServiceError";
     }
 }
+
+const generateWithOpenRouter = async (
+    instructions: string,
+    input: string
+): Promise<string> => {
+    if (!openRouter) {
+        throw new AIServiceError(
+            "OpenRouter API key is not configured"
+        );
+    }
+
+    const response = await openRouter.responses.create(
+        {
+            model: "openrouter/free",
+            instructions,
+            input,
+        },
+        {
+            timeout: 30000,
+        }
+    );
+
+    if (!response.output_text) {
+        throw new AIServiceError(
+            "OpenRouter returned an empty response"
+        );
+    }
+
+    return response.output_text;
+};
+
+const generateWithGemini = async (
+    instructions: string,
+    input: string
+): Promise<string> => {
+    if (!gemini) {
+        throw new AIServiceError(
+            "Gemini API key is not configured"
+        );
+    }
+
+    const model = gemini.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: instructions,
+    });
+
+    const result = await model.generateContent(input);
+
+    const text = result.response.text();
+
+    if (!text) {
+        throw new AIServiceError(
+            "Gemini returned an empty response"
+        );
+    }
+
+    return text;
+};
+
+const generateAIResponse = async (
+    instructions: string,
+    input: string
+): Promise<string> => {
+
+    // Check whether OpenRouter is still available
+    if (await aiProviderState.canUseOpenRouter()) {
+        try {
+            console.log("Trying OpenRouter...");
+
+            // Count the attempt because OpenRouter's
+            // failed requests can still consume the
+            // free daily quota.
+            const requestCount = await aiProviderState.recordOpenRouterRequest();
+
+            console.log(`OpenRouter usage: ${requestCount}/50`);
+
+            const response =
+                await generateWithOpenRouter(
+                    instructions,
+                    input
+                );
+
+            console.log(
+                "OpenRouter response received"
+            );
+
+            return response;
+
+        } catch (openRouterError: any) {
+
+            console.error(
+                "OpenRouter failed:",
+                openRouterError
+            );
+
+            // 429 means rate limit / quota
+            if (
+                openRouterError?.status === 429 ||
+                openRouterError?.statusCode === 429
+            ) {
+                await aiProviderState.markOpenRouterUnavailable();
+            }
+
+            console.log(
+                "Falling back to Gemini..."
+            );
+        }
+    } else {
+        console.log(
+            "OpenRouter unavailable. Skipping directly to Gemini."
+        );
+    }
+
+    // Gemini fallback
+    try {
+        const response =
+            await generateWithGemini(
+                instructions,
+                input
+            );
+
+        console.log(
+            "Gemini response received"
+        );
+
+        return response;
+
+    } catch (geminiError) {
+
+        console.error(
+            "Gemini fallback failed:",
+            geminiError
+        );
+
+        throw new AIServiceError(
+            "Unable to generate AI insight right now"
+        );
+    }
+};
 
 const generateProductInsight = async (analytics: {
     currentPrice: number;
@@ -24,11 +178,7 @@ const generateProductInsight = async (analytics: {
     trend: string;
     priceChangeCount: number;
 }) => {
-    try {
-        const response = await openai.responses.create({
-            model: "gpt-5.4-mini",
-
-            instructions: `
+    const instructions = `
 You are Lowmark's price intelligence assistant.
 
 Analyze the provided product price statistics and give a short,
@@ -42,52 +192,55 @@ Rules:
   compared with the historical data.
 - Mention the recent price trend when available.
 - Keep the response concise and useful.
-`,
+`;
 
-            input: `
+    const input = `
 Product price analytics:
 
 Current price: ₹${analytics.currentPrice}
 Lowest historical price: ₹${analytics.lowestPrice}
 Highest historical price: ₹${analytics.highestPrice}
 Average price: ₹${analytics.averagePrice}
-Previous recorded price: ${analytics.previousPrice !== null
-                    ? `₹${analytics.previousPrice}`
-                    : "Not available"
-                }
+Previous recorded price: ${
+        analytics.previousPrice !== null
+            ? `₹${analytics.previousPrice}`
+            : "Not available"
+    }
 
-Price change: ${analytics.priceChange !== null
-                    ? `₹${analytics.priceChange}`
-                    : "Not available"
-                }
+Price change: ${
+        analytics.priceChange !== null
+            ? `₹${analytics.priceChange}`
+            : "Not available"
+    }
 
-Price change percentage: ${analytics.priceChangePercentage !== null
-                    ? `${analytics.priceChangePercentage}%`
-                    : "Not available"
-                }
+Price change percentage: ${
+        analytics.priceChangePercentage !== null
+            ? `${analytics.priceChangePercentage}%`
+            : "Not available"
+    }
 
-7-day change: ${analytics.sevenDayChangePercentage !== null
-                    ? `${analytics.sevenDayChangePercentage}%`
-                    : "Not available"
-                }
+7-day change: ${
+        analytics.sevenDayChangePercentage !== null
+            ? `${analytics.sevenDayChangePercentage}%`
+            : "Not available"
+    }
 
-30-day change: ${analytics.thirtyDayChangePercentage !== null
-                    ? `${analytics.thirtyDayChangePercentage}%`
-                    : "Not available"
-                }
+30-day change: ${
+        analytics.thirtyDayChangePercentage !== null
+            ? `${analytics.thirtyDayChangePercentage}%`
+            : "Not available"
+    }
 
 Trend: ${analytics.trend}
 Price change events recorded: ${analytics.priceChangeCount}
 
 Provide a short price summary for the user.
-`,
-        });
+`;
 
-        return response.output_text;
-    } catch (error) {
-        console.error("OpenAI product insight failed:", error);
-        throw new AIServiceError("Unable to generate product insight right now");
-    }
+    return generateAIResponse(
+        instructions,
+        input
+    );
 };
 
 const generateTrackedProductsInsight = async (
@@ -107,17 +260,13 @@ const generateTrackedProductsInsight = async (
         availability: string;
         targetPrice: number | null;
         targetStatus:
-        | "reached"
-        | "close"
-        | "not_set"
-        | "above_target";
+            | "reached"
+            | "close"
+            | "not_set"
+            | "above_target";
     }>
 ) => {
-    try {
-        const response = await openai.responses.create({
-            model: "gpt-5.4-mini",
-
-            instructions: `
+    const instructions = `
 You are Lowmark's price intelligence assistant.
 
 Summarize the user's tracked products using only the
@@ -133,9 +282,9 @@ Rules:
 - Mention stable products when useful.
 - Prioritize the most important products first.
 - Keep the summary concise and easy to understand.
-`,
+`;
 
-            input: `
+    const input = `
 Here is the user's tracked product data:
 
 ${JSON.stringify(products, null, 2)}
@@ -152,14 +301,12 @@ Mention:
 
 Do not simply list every field.
 Turn the data into a useful summary for the user.
-`,
-        });
+`;
 
-        return response.output_text;
-    } catch (error) {
-        console.error("OpenAI tracked products insight failed:", error);
-        throw new AIServiceError("Unable to generate tracked products insight right now");
-    }
+    return generateAIResponse(
+        instructions,
+        input
+    );
 };
 
 const generateAttentionSummary = async (
@@ -180,11 +327,7 @@ const generateAttentionSummary = async (
         return "None of your tracked products currently require special attention.";
     }
 
-    try {
-        const response = await openai.responses.create({
-            model: "gpt-5.4-mini",
-
-            instructions: `
+    const instructions = `
 You are Lowmark's price intelligence assistant.
 
 Summarize which tracked products currently deserve the user's attention.
@@ -197,34 +340,32 @@ Rules:
 - Explain why each product deserves attention.
 - Keep the response concise.
 - Do not repeat every field from the data.
-`,
+`;
 
-            input: `
+    const input = `
 Products requiring attention:
 
 ${JSON.stringify(
-                attentionItems,
-                null,
-                2
-            )}
+    attentionItems,
+    null,
+    2
+)}
 
 Create a concise prioritized summary.
 
 Mention the most important products first.
 If there are no items, say that nothing currently requires attention.
-`,
-        });
+`;
 
-        return response.output_text;
-    } catch (error) {
-        console.error("OpenAI attnstion insight failed:", error);
-        throw new AIServiceError("Unable to generate product attention insight right now");
-    }
+    return generateAIResponse(
+        instructions,
+        input
+    );
 };
 
 export {
     AIServiceError,
-}
+};
 
 export default {
     generateProductInsight,

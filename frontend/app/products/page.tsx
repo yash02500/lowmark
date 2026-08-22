@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import Sidebar from "@/src/components/sidebar";
@@ -20,7 +20,7 @@ const ProductsPage = () => {
     const [success, setSuccess] = useState("");
 
     const handleSubmit = async (
-        event: FormEvent<HTMLFormElement>
+        event: SubmitEvent<HTMLFormElement>
     ) => {
         event.preventDefault();
 
@@ -49,8 +49,7 @@ const ProductsPage = () => {
                     url.trim()
                 );
 
-            const productId =
-                productResponse.data.id;
+            const productId = productResponse.data.id;
 
             // Step 2: Track product for current user
             await userProductService.trackProduct(
@@ -86,7 +85,7 @@ const ProductsPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-50">
             <Sidebar />
 
             <div className="md:ml-60">
@@ -105,7 +104,7 @@ const ProductsPage = () => {
 
                         <form
                             onSubmit={handleSubmit}
-                            className="mt-8 rounded-2xl border bg-white p-5 shadow-sm md:p-8"
+                            className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-8"
                         >
                             {/* Product URL */}
                             <div>
@@ -180,7 +179,7 @@ const ProductsPage = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="mt-6 w-full rounded-lg bg-black px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {loading
                                     ? "Tracking Product..."

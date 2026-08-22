@@ -5,6 +5,7 @@ import productRoutes from "./routes/productRoutes";
 import userProductRoutes from "./routes/userProductRoutes";
 import priceHistoryRoutes from "./routes/priceHistoryRoutes";
 import notificationRoute from "./routes/notificationRoute";
+import pushSubscriptionRoutes from "./routes/pushSubscriptionRoutes";
 
 const app = express();
 app.use(cors());
@@ -15,6 +16,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes, priceHistoryRoutes);
 app.use("/api/user-products", userProductRoutes);
 app.use("/api/notifications", notificationRoute);
+app.use("/api/push-subscriptions", pushSubscriptionRoutes);
 
 // Root api endpoint
 app.get('/', (req, res) => {

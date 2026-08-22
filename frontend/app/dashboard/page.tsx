@@ -5,6 +5,7 @@ import StatCard from "@/src/components/statCard";
 import Sidebar from "@/src/components/sidebar";
 import Navbar from "@/src/components/navbar";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import userProductService from "@/src/services/userProductService";
 import { UserProduct, InsightsData, AttentionData } from "@/src/types/userProduct";
 
@@ -117,18 +118,18 @@ const DashboardPage = () => {
 }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen overflow-x-hidden bg-slate-50">
             <Sidebar />
 
             <div className="md:ml-60">
                 <Navbar />
 
                 <main className="p-4 pb-24 md:p-8 md:pb-8">
-                    <h1 className="text-2xl font-bold">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
                         Welcome to Lowmark
                     </h1>
 
-                    <p className="mt-2 text-gray-600">
+                    <p className="mt-2 text-slate-500">
                         Track prices and find the right time to buy.
                     </p>
 
@@ -143,7 +144,7 @@ const DashboardPage = () => {
                         <StatCard
                             title="Price Drops"
                             value={
-                                insights?.products.filter(
+                                insights?.products?.filter(
                                     (product) =>
                                         product.priceChange !== null &&
                                         product.priceChange < 0
@@ -155,7 +156,7 @@ const DashboardPage = () => {
                         <StatCard
                             title="Near Target"
                             value={
-                                insights?.products.filter(
+                                insights?.products?.filter(
                                     (product) =>
                                         product.targetStatus === "close"
                                 ).length ?? 0
@@ -170,11 +171,13 @@ const DashboardPage = () => {
                             AI Insight
                         </h2>
 
-                        <div className="mt-4 rounded-xl border bg-white p-5 shadow-sm">
+                        <div className="mt-4 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm">
                             {insights ? (
-                                <p className="whitespace-pre-line text-gray-700">
-                                    {insights.summary}
-                                </p>
+                                <div className="prose prose-slate max-w-none">
+                                    <ReactMarkdown>
+                                        {insights.summary}
+                                    </ReactMarkdown>
+                                </div>
                             ) : (
                                 <p className="text-gray-500">
                                     Loading insight...
@@ -196,13 +199,13 @@ const DashboardPage = () => {
                                 </span>
                             )}
                         </div>
-
+                    {attention?.summary && (
                         <div className="mt-4 space-y-3">
                             {attention?.attentionItems.length ? (
                                 attention.attentionItems.map((item, index) => (
                                     <div
                                         key={`${item.productId}-${item.type}-${index}`}
-                                        className="rounded-xl border bg-white p-4 shadow-sm"
+                                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
                                     >
                                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                             <div>
@@ -235,6 +238,7 @@ const DashboardPage = () => {
                                 </div>
                             )}
                         </div>
+                    )}
                     </section>
 
                     {/* Tracked Products */}
@@ -274,10 +278,10 @@ const DashboardPage = () => {
                                         return (
                                             <div
                                                 key={userProduct.id}
-                                                className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+                                                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                                             >
                                                 {/* Product image */}
-                                                <div className="flex h-52 items-center justify-center bg-gray-50 p-4">
+                                                <div className="flex h-52 items-center justify-center bg-slate-50 p-4">
                                                     {product.imageUrl ? (
                                                         <img
                                                             src={product.imageUrl}
@@ -309,7 +313,7 @@ const DashboardPage = () => {
                                                         </span>
                                                     </div>
 
-                                                    <h3 className="line-clamp-2 min-h-12 font-semibold text-gray-900">
+                                                    <h3 className="line-clamp-2 min-h-12 font-semibold leading-6 text-slate-900">
                                                         {product.title}
                                                     </h3>
 

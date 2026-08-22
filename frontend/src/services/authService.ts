@@ -41,6 +41,18 @@ const getMe = async () => {
     return response.data;
 };
 
+const updateMe = async (data: {
+    name: string;
+    email: string;
+}) => {
+    const response = await api.patch(
+        "/auth/me",
+        data
+    );
+
+    return response.data;
+};
+
 const refreshToken = async (refreshToken: string) => {
     const response = await api.post("/auth/refresh-token", { refreshToken });
     return response.data;
@@ -51,10 +63,26 @@ const logout = async () => {
     return response.data;
 };
 
+const verifyEmail = async (token: string) => {
+    const response = await api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`);
+    return response.data;
+};
+
+const resendVerification = async () => {
+    const response = await api.post(
+        "/auth/resend-verification"
+    );
+
+    return response.data;
+};
+
 export default {
     register,
     login,
     getMe,
+    updateMe,
     refreshToken,
+    verifyEmail,
+    resendVerification,
     logout,
 };

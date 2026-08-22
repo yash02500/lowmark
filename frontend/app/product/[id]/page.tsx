@@ -92,7 +92,7 @@ const ProductDetailPage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen overflow-x-hidden bg-slate-50">
                 <Sidebar />
 
                 <div className="md:ml-60">
@@ -202,7 +202,7 @@ const ProductDetailPage = () => {
                     </button>
 
                     {/* Product Header */}
-                    <section className="rounded-2xl border bg-white p-5 shadow-sm md:p-8">
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-8">
                         <div className="grid gap-8 md:grid-cols-2">
                             {/* Image */}
                             <div className="flex h-72 items-center justify-center rounded-xl bg-gray-50 p-6">
@@ -306,7 +306,7 @@ const ProductDetailPage = () => {
 
                     {/* Price Statistics */}
                     <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <div className="rounded-xl border bg-white p-5 shadow-sm">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                             <p className="text-sm text-gray-500">
                                 Lowest Price
                             </p>
@@ -387,7 +387,7 @@ const ProductDetailPage = () => {
                 </main>
             </div>
             {showUntrackConfirm && (
-                <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-90 flex items-center justify-center bg-black/50 p-4">
                     <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
                         <h2 className="text-xl font-semibold text-gray-900">
                             Untrack Product?
@@ -494,7 +494,7 @@ const PriceChart = ({
 
     return (
         <div className="mt-6 overflow-x-auto">
-            <div className="min-w-[600px]">
+            <div className="min-w-520px">
                 <svg
                     viewBox={`0 0 ${width} ${height}`}
                     className="h-auto w-full"

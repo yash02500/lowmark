@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import authService from "../services/authService";
 import { registerSchema, loginSchema } from "../validations/authValidation";
+import emailVerificationService from "../services/emailVerificationService";
+import { verify } from "node:crypto";
 
 const register = async (req: Request, res: Response) => {
     try {
@@ -50,6 +52,29 @@ const getMe = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         return res.status(404).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const updateMe = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId!;
+
+        const updatedUser =
+            await authService.updateMe(
+                userId,
+                req.body
+            );
+
+        return res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: updatedUser,
+        });
+    } catch (error: any) {
+        return res.status(400).json({
             success: false,
             message: error.message,
         });
@@ -109,10 +134,49 @@ const logout = async (req: Request, res: Response) => {
     }
 };
 
+const verifyEmail = async (req: Request, res: Response) => {
+    try {
+        const token = req.query.token as string;
+        const user = await emailVerificationService.verifyEmail(token);
+
+        return res.status(200).json({
+            success: true,
+            message: "Email verified successfully",
+            data: user,
+        });
+    } catch (error: any) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const resendVerification = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId!;
+        await emailVerificationService.resendVerificationEmail(userId);
+
+        return res.status(200).json({
+            success: true,
+            message:
+                "Verification email sent successfully",
+        });
+    } catch (error: any) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 export default {
     register,
     login,
     getMe,
+    updateMe,
     logout,
     refreshToken,
+    verifyEmail,
+    resendVerification,
 }

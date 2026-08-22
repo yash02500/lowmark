@@ -5,6 +5,7 @@
 # ============================================
 
 backend/node_modules/
+backend/dist/
 
 # Backend environment files
 backend/.env

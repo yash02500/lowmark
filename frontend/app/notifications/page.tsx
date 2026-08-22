@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import Sidebar from "@/src/components/sidebar";
 import Navbar from "@/src/components/navbar";
 import notificationService from "@/src/services/notificationService";
 import { Notification } from "@/src/types/notification";
+import pushNotificationService from "@/src/services/pushNotificationService";
 
 const getNotificationIcon = (type: Notification["type"]) => {
     switch (type) {
@@ -80,9 +80,7 @@ const NotificationsPage = () => {
             setLoading(true);
             setError("");
 
-            const response =
-                await notificationService.getNotifications();
-
+            const response = await notificationService.getNotifications();
             setNotifications(response.data);
         } catch (error: any) {
             if (error.response?.status === 401) {
@@ -100,6 +98,26 @@ const NotificationsPage = () => {
 
     useEffect(() => {
         fetchNotifications();
+    }, []);
+
+    useEffect(() => {
+        const checkPushSubscription = async () => {
+            try {
+                const subscription =
+                    await pushNotificationService.getExistingSubscription();
+
+                setPushEnabled(
+                    Boolean(subscription)
+                );
+            } catch (error) {
+                console.error(
+                    "Failed to check push subscription:",
+                    error
+                );
+            }
+        };
+
+        checkPushSubscription();
     }, []);
 
     const handleMarkAsRead = async (
@@ -204,12 +222,60 @@ const NotificationsPage = () => {
         );
     };
 
+    const [pushLoading, setPushLoading] = useState(false);
+    const [pushMessage, setPushMessage] = useState("");
+    const [pushEnabled, setPushEnabled] = useState(false);
+
+    const handleEnablePushNotifications = async () => {
+        try {
+            setPushLoading(true);
+            setPushMessage("");
+
+            await pushNotificationService.subscribeToPush();
+
+            setPushEnabled(true);
+
+            setPushMessage(
+                "Push notifications enabled successfully."
+            );
+        } catch (error: any) {
+            setPushMessage(
+                error.message ||
+                "Unable to enable push notifications."
+            );
+        } finally {
+            setPushLoading(false);
+        }
+    };
+
+    const handleDisablePushNotifications = async () => {
+        try {
+            setPushLoading(true);
+            setPushMessage("");
+
+            await pushNotificationService.unsubscribeFromPush();
+
+            setPushEnabled(false);
+
+            setPushMessage(
+                "Push notifications disabled."
+            );
+        } catch (error: any) {
+            setPushMessage(
+                error.message ||
+                "Unable to disable push notifications."
+            );
+        } finally {
+            setPushLoading(false);
+        }
+    };
+
     const unreadCount = notifications.filter(
         (notification) => !notification.isRead
     ).length;
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-50">
             <Sidebar />
 
             <div className="md:ml-60">
@@ -228,19 +294,51 @@ const NotificationsPage = () => {
                             </p>
                         </div>
 
-                        {unreadCount > 0 && (
-                            <button
-                                type="button"
-                                onClick={handleMarkAllAsRead}
-                                disabled={processingId === -1}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {processingId === -1
-                                    ? "Marking..."
-                                    : `Mark all as read (${unreadCount})`}
-                            </button>
-                        )}
+                        <div className="flex flex-wrap gap-2">
+                            {pushEnabled ? (
+                                <button
+                                    type="button"
+                                    onClick={handleDisablePushNotifications}
+                                    disabled={pushLoading}
+                                    className="rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {pushLoading
+                                        ? "Disabling..."
+                                        : "🔔 Push Notifications Enabled"}
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleEnablePushNotifications}
+                                    disabled={pushLoading}
+                                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {pushLoading
+                                        ? "Enabling..."
+                                        : "Enable Push Notifications"}
+                                </button>
+                            )}
+
+                            {unreadCount > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={handleMarkAllAsRead}
+                                    disabled={processingId === -1}
+                                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {processingId === -1
+                                        ? "Marking..."
+                                        : `Mark all as read (${unreadCount})`}
+                                </button>
+                            )}
+                        </div>
                     </div>
+
+                    {pushMessage && (
+                        <p className="mt-2 text-sm text-gray-600">
+                            {pushMessage}
+                        </p>
+                    )}
 
                     {error && (
                         <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
@@ -284,11 +382,10 @@ const NotificationsPage = () => {
                                             key={
                                                 notification.id
                                             }
-                                            className={`rounded-xl border bg-white p-4 shadow-sm transition ${
-                                                !notification.isRead
-                                                    ? "border-blue-200"
-                                                    : "border-gray-200"
-                                            }`}
+                                            className={`rounded-xl border bg-white p-4 shadow-sm transition ${!notification.isRead
+                                                ? "border-blue-200"
+                                                : "border-gray-200"
+                                                }`}
                                         >
                                             <div className="flex gap-4">
                                                 <div

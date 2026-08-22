@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import authRepository from "../repositories/authRepository";
 import { RegisterInput, LoginInput } from "../validations/authValidation";
+import emailVerificationService from "./emailVerificationService";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -18,6 +19,12 @@ const register = async (userData: RegisterInput) => {
         ...userData,
         password: hashedPassword,
     });
+
+    await emailVerificationService.createVerificationToken(
+        Number(newUser.get("id")),
+        newUser.get("email") as string,
+        newUser.get("name") as string
+    );
 
     return {
         id: newUser.get("id"),
@@ -104,6 +111,67 @@ const getMe = async (userId: number) => {
     return userResponse;
 };
 
+const updateMe = async (
+    userId: number,
+    userData: {
+        name: string;
+        email: string;
+    }) => {
+    const user = await authRepository.findUserById(userId);
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    const name = userData.name.trim();
+    const email = userData.email.trim().toLowerCase();
+
+    if (!name) {
+        throw new Error("Name is required");
+    }
+
+    if (!email) {
+        throw new Error("Email is required");
+    }
+
+    const currentEmail = user.get("email") as string;
+
+    if (email !== currentEmail) {
+        const existingUser = await authRepository.findUserEmail(email);
+
+        if (existingUser && Number(existingUser.get("id")) !== userId) {
+            throw new Error(
+                "Email already registered"
+            );
+        }
+
+        await user.update({
+            name,
+            email,
+            emailVerified: false,
+        });
+
+        await emailVerificationService.createVerificationToken(
+            userId,
+            email,
+            name
+        );
+    } else {
+        await user.update({
+            name,
+        });
+    }
+
+    return {
+        id: user.get("id"),
+        name: user.get("name"),
+        email: user.get("email"),
+        emailVerified: user.get("emailVerified"),
+        createdAt: user.get("createdAt"),
+        updatedAt: user.get("updatedAt"),
+    };
+};
+
 const refreshAccessToken = async (refreshToken: string) => {
     const jwtSecret = process.env.JWT_SECRET;
 
@@ -148,11 +216,11 @@ const refreshAccessToken = async (refreshToken: string) => {
 };
 
 const logout = async (refreshToken: string) => {
-  const deletedRows = await authRepository.deleteRefreshToken(refreshToken);
+    const deletedRows = await authRepository.deleteRefreshToken(refreshToken);
 
-  if (deletedRows === 0) {
-    throw new Error("Invalid refresh token");
-  }
+    if (deletedRows === 0) {
+        throw new Error("Invalid refresh token");
+    }
 };
 
 export default {
@@ -161,4 +229,5 @@ export default {
     getMe,
     refreshAccessToken,
     logout,
+    updateMe,
 };

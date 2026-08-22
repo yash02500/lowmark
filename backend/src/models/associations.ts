@@ -3,6 +3,8 @@ import Product from "./product";
 import UserProduct from "./userProduct";
 import PriceHistory from "./priceHistory";
 import AIProviderUsage from "./aiProviderUsage";
+import PushSubscription from "./pushSubscription";
+import EmailVerificationToken from "./emailVerificationToken";
 
 User.hasMany(UserProduct, {
     foreignKey: "userId",

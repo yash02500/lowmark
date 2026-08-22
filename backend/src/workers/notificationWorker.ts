@@ -1,6 +1,7 @@
 import { Worker, Job } from "bullmq";
 import redisConnection from "../config/redis";
 import notificationService from "../services/notificationService";
+import pushNotificationService from "../services/pushNotificationService";
 
 interface NotificationJobData {
     userId: number;
@@ -37,6 +38,17 @@ const notificationWorker =
 
             console.log(
                 `Notification created: ${notification.getDataValue("id")}`
+            );
+
+            await pushNotificationService.sendPushNotification({
+                userId,
+                title,
+                message,
+                url: `/product/${productId}`,
+            });
+
+            console.log(
+                `Push notification processed for user ${userId}`
             );
 
             return notification;

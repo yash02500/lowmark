@@ -36,7 +36,7 @@ const AuthExpiredModal = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
                 <h2 className="text-xl font-semibold text-gray-900">
                     Session Expired
@@ -50,9 +50,9 @@ const AuthExpiredModal = () => {
                 <button
                     type="button"
                     onClick={handleLogin}
-                    className="mt-6 w-full rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+                    className="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
                 >
-                    Login Again
+                    Login
                 </button>
             </div>
         </div>

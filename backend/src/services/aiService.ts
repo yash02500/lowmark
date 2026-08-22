@@ -4,7 +4,7 @@ import aiProviderState from "./aiProviderState";
 import dotenv from "dotenv";
 
 dotenv.config();
-
+const AI_ENABLED = process.env.AI_ENABLED === "true";
 const openRouterApiKey = process.env.OPENROUTER_API_KEY;
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
@@ -88,6 +88,10 @@ const generateAIResponse = async (
     instructions: string,
     input: string
 ): Promise<string> => {
+
+    if (!AI_ENABLED) {
+        return "AI insights are currently disabled.";
+    }
 
     // Check whether OpenRouter is still available
     if (await aiProviderState.canUseOpenRouter()) {
@@ -192,6 +196,8 @@ Rules:
   compared with the historical data.
 - Mention the recent price trend when available.
 - Keep the response concise and useful.
+- All prices must be written using the Indian rupee symbol ₹.
+- Never use $, USD, dollars, or any other currency symbol.
 `;
 
     const input = `
@@ -211,7 +217,7 @@ Price change: ${
         analytics.priceChange !== null
             ? `₹${analytics.priceChange}`
             : "Not available"
-    }
+    }3
 
 Price change percentage: ${
         analytics.priceChangePercentage !== null
@@ -282,6 +288,8 @@ Rules:
 - Mention stable products when useful.
 - Prioritize the most important products first.
 - Keep the summary concise and easy to understand.
+- All prices must be written using the Indian rupee symbol ₹.
+- Never use $, USD, dollars, or any other currency symbol.
 `;
 
     const input = `

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import StatCard from "@/src/components/statCard";
 import Sidebar from "@/src/components/sidebar";
 import Navbar from "@/src/components/navbar";
@@ -10,6 +11,7 @@ import userProductService from "@/src/services/userProductService";
 import { UserProduct, InsightsData, AttentionData } from "@/src/types/userProduct";
 
 const DashboardPage = () => {
+    const router = useRouter();
     const [products, setProducts] = useState<UserProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -19,6 +21,14 @@ const DashboardPage = () => {
 
  useEffect(() => {
     const fetchDashboardData = async () => {
+        const accessToken =
+            localStorage.getItem("accessToken");
+
+        if (!accessToken) {
+            router.replace("/login");
+            return;
+        }
+
         try {
             setLoading(true);
             setError("");
@@ -115,7 +125,7 @@ const DashboardPage = () => {
     };
 
     fetchDashboardData();
-}, []);
+}, [router]);
 
     return (
         <div className="min-h-screen overflow-x-hidden bg-slate-50">

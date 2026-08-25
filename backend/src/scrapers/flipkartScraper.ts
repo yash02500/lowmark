@@ -15,11 +15,33 @@ class FlipkartScraper implements ProductScraper {
                 timeout: 30000,
             });
 
-            const pagetext = await page.locator("body").innerText();
+            await page.waitForTimeout(1500);
 
+            const pageText =
+                await page
+                    .locator("body")
+                    .innerText()
+                    .catch(() => "");
+
+            /*
+             * Bot / verification / blocked page
+             */
+            if (
+                /are you a human|verify (you are )?human|captcha|access denied|checking your browser|robot check|just a moment|please verify/i.test(
+                    pageText
+                )
+            ) {
+                throw new Error(
+                    "Flipkart returned a bot-check or verification page."
+                );
+            }
+
+            /*
+             * Product removed / unavailable page
+             */
             if (
                 /page you are looking for has been moved or deleted/i.test(
-                    pagetext
+                    pageText
                 )
             ) {
                 return {
@@ -31,30 +53,78 @@ class FlipkartScraper implements ProductScraper {
                 };
             }
 
-            const title = await page.locator("h1").textContent();
+            /*
+             * Product title
+             */
+            const title = await page
+                .locator("h1")
+                .first()
+                .textContent()
+                .catch(() => null);
 
-            if (!title) {
-                throw new Error("Unable to extract product title");
+            if (!title?.trim()) {
+                throw new Error(
+                    "Unable to extract Flipkart product title."
+                );
             }
 
-            const image = await page.locator('img[src*="rukminim2.flixcart.com"]').first().getAttribute("src");
+            const cleanedTitle = title.trim();
+
+            /*
+             * Final title safety check
+             */
+            if (
+                /are you a human|captcha|verify|access denied|robot/i.test(
+                    cleanedTitle
+                )
+            ) {
+                throw new Error(
+                    "Flipkart returned an invalid product title."
+                );
+            }
+
+            /*Product image*/
+            const image =
+                await page
+                    .locator(
+                        'img[src*="rukminim2.flixcart.com"]'
+                    )
+                    .first()
+                    .getAttribute("src")
+                    .catch(() => null);
 
             if (!image) {
-                throw new Error("Unable to extract product image");
+                throw new Error(
+                    "Unable to extract Flipkart product image."
+                );
             }
 
-            let availability: "in_stock" | "out_of_stock" | "discontinued";
-            const pageText = await page.locator("body").textContent();
+            /*Availability*/
+            let availability:
+                | "in_stock"
+                | "out_of_stock"
+                | "discontinued";
 
             if (
-                /out of stock|currently unavailable|sold out/i.test(pagetext)
+                /out of stock|currently unavailable|sold out/i.test(
+                    pageText
+                )
             ) {
                 availability = "out_of_stock";
             } else {
                 availability = "in_stock";
             }
 
-            const priceText = await page.locator('div').filter({ hasText: /^₹[\d,]+$/ }).first().textContent();
+            /* Price*/
+            const priceText =
+                await page
+                    .locator("div")
+                    .filter({
+                        hasText: /^₹[\d,]+$/,
+                    })
+                    .first()
+                    .textContent()
+                    .catch(() => null);
 
             let price: number | null = null;
 
@@ -69,7 +139,7 @@ class FlipkartScraper implements ProductScraper {
             }
 
             return {
-                title: title.trim(),
+                title: cleanedTitle,
                 imageUrl: image,
                 price,
                 currency: "INR",

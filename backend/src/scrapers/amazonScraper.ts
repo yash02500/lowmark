@@ -17,6 +17,18 @@ class AmazonScraper implements ProductScraper {
 
             // Give Amazon a short moment to render the product page
             await page.waitForTimeout(2000);
+            
+            const bodyText = await page.locator("body").innerText().catch(() => "");
+
+            if (
+                /are you a human|verify (you are )?human|captcha|access denied|checking your browser|robot check|just a moment/i.test(
+                    bodyText
+                )
+            ) {
+                throw new Error(
+                    "Amazon returned a bot-check or verification page."
+                );
+            }
 
             const titleLocator = page.locator("span#productTitle");
 

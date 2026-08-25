@@ -153,7 +153,16 @@ const updateProductPrice = async (productId: number) => {
     if (currentPrice === scrapedData.price) {
         return {
             changed: false,
+            previousPrice: currentPrice,
+            currentPrice: scrapedData.price,
+            priceDropped: false,
+            priceIncreased: false,
+            availabilityChanged:
+                previousTrackingState !== trackingState,
+            previousTrackingState,
+            currentTrackingState: trackingState,
             product,
+            userProducts,
             nextCheckAt,
             checkIntervalMinutes: interval,
         };

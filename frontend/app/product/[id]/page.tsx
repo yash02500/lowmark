@@ -6,6 +6,7 @@ import Sidebar from "@/src/components/sidebar";
 import Navbar from "@/src/components/navbar";
 import userProductService from "@/src/services/userProductService";
 import {UserProduct, PriceHistory,} from "@/src/types/userProduct";
+import { clearDashboardAICache } from "@/src/utils/dashboardCache";
 
 const ProductDetailPage = () => {
     const params = useParams();
@@ -165,6 +166,7 @@ const ProductDetailPage = () => {
                     setUntracking(true);
 
                     await userProductService.untrackProduct(id);
+                    clearDashboardAICache();
 
                     router.push("/dashboard");
                 } catch (error: any) {

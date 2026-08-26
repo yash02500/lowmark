@@ -12,7 +12,7 @@ const createProduct = async (productData: { url: string; }) => {
     const existingProduct = await productRepository.findProductByUrl(normalizedUrl);
 
     if (existingProduct) {
-        throw new Error("Product already exist");
+        return existingProduct;
     }
 
     const scrapedData = await scraperService.scrapeProduct(url);

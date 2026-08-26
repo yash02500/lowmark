@@ -1,7 +1,21 @@
 import AmazonScraper from "../scrapers/amazonScraper";
+import BrightDataAmazonScraper from "../scrapers/brightDataAmazonScraper";
+import BrightDataFlipkartScraper from "../scrapers/brightDataFlipkartScraper";
 import FlipkartScraper from "../scrapers/flipkartScraper";
 import detectPlatform from "../scrapers/platformDetector";
 import { ScrapedProductData } from "../scrapers/types";
+
+const invalidScrapedTitles = [
+  "are you a human",
+  "verify you are human",
+  "verify you are a human",
+  "captcha",
+  "access denied",
+  "checking your browser",
+  "just a moment",
+  "robot check",
+  "please verify",
+];
 
 const validateScrapedProductData = (
   data: ScrapedProductData
@@ -36,11 +50,15 @@ const validateScrapedProductData = (
     );
   }
 
-  if (
-    /are you a human|verify (you are )?human|captcha|access denied|checking your browser|robot check|just a moment|please verify/i.test(
-      title
-    )
-  ) {
+  const normalizedTitle =
+    title.toLowerCase();
+
+  const isBlocked =
+    invalidScrapedTitles.some((phrase) =>
+      normalizedTitle.includes(phrase)
+    );
+
+  if (isBlocked) {
     throw new Error(
       "Retailer returned a bot-check or verification page."
     );
@@ -49,17 +67,33 @@ const validateScrapedProductData = (
 
 const scrapeProduct = async (
   url: string
-): Promise<ScrapedProductData & { platform: string }> => {
+): Promise<
+  ScrapedProductData & { platform: string }
+> => {
   const platform = detectPlatform(url);
+
+  const provider =
+    process.env.PRICE_DATA_PROVIDER ||
+    "playwright";
 
   let data: ScrapedProductData;
 
   if (platform === "amazon") {
-    const scraper = new AmazonScraper();
-    data = await scraper.scrape(url);
+    if (provider === "brightdata") {
+      const scraper = new BrightDataAmazonScraper();
+      data = await scraper.scrape(url);
+    } else {
+      const scraper = new AmazonScraper();
+      data = await scraper.scrape(url);
+    }
   } else if (platform === "flipkart") {
-    const scraper = new FlipkartScraper();
-    data = await scraper.scrape(url);
+    if (provider === "brightdata") {
+      const scraper = new BrightDataFlipkartScraper();
+      data = await scraper.scrape(url);
+    } else {
+      const scraper = new FlipkartScraper();
+      data = await scraper.scrape(url);
+    }
   } else {
     throw new Error(
       "Scraper not implemented for this platform"

@@ -2,12 +2,11 @@
 
 import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
-
 import Sidebar from "@/src/components/sidebar";
 import Navbar from "@/src/components/navbar";
-
 import productService from "@/src/services/productService";
 import userProductService from "@/src/services/userProductService";
+import { clearDashboardAICache } from "@/src/utils/dashboardCache";
 
 const ProductsPage = () => {
     const router = useRouter();
@@ -65,6 +64,9 @@ const ProductsPage = () => {
 
             setUrl("");
             setTargetPrice("");
+
+            // Invalidate dashboard-derived AI data
+            clearDashboardAICache();
 
             // Go back to dashboard
             setTimeout(() => {

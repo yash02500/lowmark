@@ -49,7 +49,7 @@ const DashboardPage = () => {
             const cachedAt =
                 sessionStorage.getItem("dashboardAI_cachedAt");
 
-            const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+            const CACHE_DURATION = 30 * 60 * 1000; // 15 minutes
 
             const cacheIsValid =
                 cachedAt &&

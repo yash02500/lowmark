@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import authService from "../services/authService";
-import { registerSchema, loginSchema } from "../validations/authValidation";
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema} from "../validations/authValidation";
 import emailVerificationService from "../services/emailVerificationService";
-import { verify } from "node:crypto";
+import passwordResetService from "../services/passwordResetService";
 
 const register = async (req: Request, res: Response) => {
     try {
@@ -170,6 +170,49 @@ const resendVerification = async (req: Request, res: Response) => {
     }
 };
 
+const forgotPassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = forgotPasswordSchema.parse(req.body);
+
+        await passwordResetService.requestPasswordReset(
+            email
+        );
+
+        return res.status(200).json({
+            success: true,
+            message:
+                "If an account exists for that email, a password reset link has been sent.",
+        });
+    } catch (error: any) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const resetPassword = async (req: Request, res: Response) => {
+    try {
+        const { token, password } = resetPasswordSchema.parse(req.body);
+
+        await passwordResetService.resetPassword(
+            token,
+            password
+        );
+
+        return res.status(200).json({
+            success: true,
+            message:
+                "Password reset successfully",
+        });
+    } catch (error: any) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 export default {
     register,
     login,
@@ -179,4 +222,6 @@ export default {
     refreshToken,
     verifyEmail,
     resendVerification,
+    forgotPassword,
+    resetPassword,
 }

@@ -101,7 +101,83 @@ const verifyConnection = async () => {
     await transporter.verify();
 };
 
+const sendPasswordResetEmail = async (
+    email: string,
+    name: string,
+    rawToken: string
+) => {
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    if (!frontendUrl) {
+        throw new Error("FRONTEND_URL not defined");
+    }
+
+    const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: email,
+        subject: "Reset your Lowmark password",
+
+        text: `Hi ${name},
+
+        We received a request to reset your Lowmark password.
+
+        Reset your password using this link:
+
+        ${resetUrl}
+
+        This link will expire in 30 minutes.
+
+        If you did not request a password reset, you can safely ignore this email.
+
+        Thanks,
+        Lowmark`.trim(),
+
+        html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <h2>Reset your Lowmark password</h2>
+
+                <p>Hi ${name},</p>
+
+                <p>
+                    We received a request to reset your Lowmark password.
+                </p>
+
+                <p>
+                    <a
+                        href="${resetUrl}"
+                        style="
+                            display:inline-block;
+                            padding:12px 20px;
+                            background:#4f46e5;
+                            color:#ffffff;
+                            text-decoration:none;
+                            border-radius:6px;
+                        "
+                    >
+                        Reset Password
+                    </a>
+                </p>
+
+                <p>This link will expire in 30 minutes.</p>
+
+                <p>
+                    If you did not request a password reset,
+                    you can safely ignore this email.
+                </p>
+
+                <p>
+                    Thanks,<br />
+                    Lowmark
+                </p>
+            </div>
+        `,
+    });
+};
+
 export default {
     sendVerificationEmail,
     verifyConnection,
+    sendPasswordResetEmail,
 };

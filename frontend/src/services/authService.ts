@@ -76,6 +76,27 @@ const resendVerification = async () => {
     return response.data;
 };
 
+const forgotPassword = async (email: string) => {
+    const response = await api.post(
+            "/auth/forgot-password",
+            { email }
+        );
+
+    return response.data;
+};
+
+const resetPassword = async (token: string, password: string) => {
+    const response = await api.post(
+            "/auth/reset-password",
+            {
+                token,
+                password,
+            }
+        );
+
+    return response.data;
+};
+
 export default {
     register,
     login,
@@ -85,4 +106,6 @@ export default {
     verifyEmail,
     resendVerification,
     logout,
+    forgotPassword,
+    resetPassword,
 };

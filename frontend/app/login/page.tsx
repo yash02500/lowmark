@@ -111,8 +111,8 @@ const LoginPage = () => {
                                 autoComplete="email"
                                 {...register("email")}
                                 className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition ${errors.email
-                                        ? "border-red-300 focus:border-red-500"
-                                        : "border-gray-300 focus:border-gray-900"
+                                    ? "border-red-300 focus:border-red-500"
+                                    : "border-gray-300 focus:border-gray-900"
                                     }`}
                             />
 
@@ -138,8 +138,8 @@ const LoginPage = () => {
                                 autoComplete="current-password"
                                 {...register("password")}
                                 className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition ${errors.password
-                                        ? "border-red-300 focus:border-red-500"
-                                        : "border-gray-300 focus:border-gray-900"
+                                    ? "border-red-300 focus:border-red-500"
+                                    : "border-gray-300 focus:border-gray-900"
                                     }`}
                             />
 
@@ -166,6 +166,13 @@ const LoginPage = () => {
                                 : "Sign In"}
                         </button>
                     </form>
+
+                    <Link
+                        href="/forgot-password"
+                        className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                    >
+                        Forgot password?
+                    </Link>
 
                     <p className="mt-6 text-center text-sm text-gray-500">
                         Don't have an account?{" "}

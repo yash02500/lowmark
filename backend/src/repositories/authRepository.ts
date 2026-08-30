@@ -36,6 +36,16 @@ const deleteRefreshToken = async (token: string) => {
   });
 };
 
+const deleteRefreshTokensByUserId = async (
+    userId: number
+) => {
+    return await RefreshToken.destroy({
+        where: {
+            userId,
+        },
+    });
+};
+
 export default {
     findUserEmail,
     createUser,
@@ -43,4 +53,5 @@ export default {
     createRefreshToken,
     findRefreshToken,
     deleteRefreshToken,
+    deleteRefreshTokensByUserId,
 };

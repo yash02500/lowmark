@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
+import { z } from "zod";
 import productService from "../services/productService";
+import { createProductSchema, productIdParamSchema } from "../validations/productValidation";
 
 const createProduct = async (req: Request, res: Response) => {
     try {
-        const product = await productService.createProduct(req.body);
+        const validationResult = createProductSchema.parse(req.body);
+        const product = await productService.createProduct(validationResult);
 
         return res.status(201).json({
             success: true,
@@ -11,7 +14,14 @@ const createProduct = async (req: Request, res: Response) => {
             data: product,
         });
     } catch (error: any) {
-        return res.status(400).json({
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({
+                success: false,
+                message: error.issues[0].message,
+            });
+        }
+
+        return res.status(404).json({
             success: false,
             message: error.message,
         });
@@ -20,9 +30,8 @@ const createProduct = async (req: Request, res: Response) => {
 
 const getProductById = async (req: Request, res: Response) => {
     try {
-        const productId = Number(req.params.id);
-
-        const product = await productService.getProductById(productId);
+        const { id } = productIdParamSchema.parse(req.params);
+        const product = await productService.getProductById(id);
 
         return res.status(200).json({
             success: true,
@@ -30,6 +39,13 @@ const getProductById = async (req: Request, res: Response) => {
             data: product,
         });
     } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({
+                success: false,
+                message: error.issues[0].message,
+            });
+        }
+
         return res.status(404).json({
             success: false,
             message: error.message,
@@ -56,15 +72,22 @@ const getAllProducts = async (_req: Request, res: Response) => {
 
 const deleteProduct = async (req: Request, res: Response) => {
     try {
-        const productId = Number(req.params.id);
+        const { id } = productIdParamSchema.parse(req.params);
 
-        await productService.deleteProduct(productId);
+        await productService.deleteProduct(id);
 
         return res.status(200).json({
             success: true,
             message: "Product deleted successfully",
         });
     } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({
+                success: false,
+                message: error.issues[0].message,
+            });
+        }
+
         return res.status(404).json({
             success: false,
             message: error.message,

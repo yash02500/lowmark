@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import authService from "../services/authService";
+import z from "zod";
 import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema} from "../validations/authValidation";
 import emailVerificationService from "../services/emailVerificationService";
 import passwordResetService from "../services/passwordResetService";
@@ -16,7 +17,14 @@ const register = async (req: Request, res: Response) => {
             data: user,
         });
     } catch (error: any) {
-        return res.status(400).json({
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({
+                success: false,
+                message: error.issues[0].message,
+            });
+        }
+
+        return res.status(404).json({
             success: false,
             message: error.message,
         });
@@ -34,7 +42,14 @@ const login = async (req: Request, res: Response) => {
             data: user,
         });
     } catch (error: any) {
-        return res.status(400).json({
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({
+                success: false,
+                message: error.issues[0].message,
+            });
+        }
+
+        return res.status(404).json({
             success: false,
             message: error.message,
         });
@@ -184,7 +199,14 @@ const forgotPassword = async (req: Request, res: Response) => {
                 "If an account exists for that email, a password reset link has been sent.",
         });
     } catch (error: any) {
-        return res.status(400).json({
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({
+                success: false,
+                message: error.issues[0].message,
+            });
+        }
+
+        return res.status(404).json({
             success: false,
             message: error.message,
         });
@@ -206,7 +228,14 @@ const resetPassword = async (req: Request, res: Response) => {
                 "Password reset successfully",
         });
     } catch (error: any) {
-        return res.status(400).json({
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({
+                success: false,
+                message: error.issues[0].message,
+            });
+        }
+
+        return res.status(404).json({
             success: false,
             message: error.message,
         });

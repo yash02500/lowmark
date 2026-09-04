@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import authService from "../services/authService";
 import z from "zod";
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema} from "../validations/authValidation";
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, updateMeSchema, refreshTokenSchema, verifyEmailSchema} from "../validations/authValidation";
 import emailVerificationService from "../services/emailVerificationService";
 import passwordResetService from "../services/passwordResetService";
 
@@ -76,11 +76,25 @@ const getMe = async (req: Request, res: Response) => {
 const updateMe = async (req: Request, res: Response) => {
     try {
         const userId = req.userId!;
+        const validationResult = updateMeSchema.safeParse(req.body);
+
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
 
         const updatedUser =
             await authService.updateMe(
                 userId,
-                req.body
+                validationResult.data,
             );
 
         return res.status(200).json({
@@ -98,16 +112,22 @@ const updateMe = async (req: Request, res: Response) => {
 
 const refreshToken = async (req: Request, res: Response) => {
     try {
-        const { refreshToken } = req.body;
+        const validationResult = refreshTokenSchema.safeParse(req.body);
 
-        if (!refreshToken) {
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
             return res.status(400).json({
                 success: false,
-                message: "Refresh token is required",
+                message: "Validation failed",
+                errors,
             });
         }
 
-        const accessToken = await authService.refreshAccessToken(refreshToken);
+        const accessToken = await authService.refreshAccessToken(validationResult.data.refreshToken);
 
         return res.status(200).json({
             success: true,
@@ -126,16 +146,22 @@ const refreshToken = async (req: Request, res: Response) => {
 
 const logout = async (req: Request, res: Response) => {
     try {
-        const { refreshToken } = req.body;
+        const validationResult = refreshTokenSchema.safeParse(req.body);
 
-        if (!refreshToken) {
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
             return res.status(400).json({
                 success: false,
-                message: "Refresh token is required",
+                message: "Validation failed",
+                errors,
             });
         }
 
-        await authService.logout(refreshToken);
+        await authService.logout(validationResult.data.refreshToken);
 
         return res.status(200).json({
             success: true,
@@ -151,8 +177,21 @@ const logout = async (req: Request, res: Response) => {
 
 const verifyEmail = async (req: Request, res: Response) => {
     try {
-        const token = req.query.token as string;
-        const user = await emailVerificationService.verifyEmail(token);
+        const validationResult = verifyEmailSchema.safeParse(req.query);
+
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+        const user = await emailVerificationService.verifyEmail(validationResult.data.token);
 
         return res.status(200).json({
             success: true,

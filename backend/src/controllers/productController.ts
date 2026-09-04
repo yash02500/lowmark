@@ -5,8 +5,22 @@ import { createProductSchema, productIdParamSchema } from "../validations/produc
 
 const createProduct = async (req: Request, res: Response) => {
     try {
-        const validationResult = createProductSchema.parse(req.body);
-        const product = await productService.createProduct(validationResult);
+        const validationResult = createProductSchema.safeParse(req.body);
+
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+        
+        const product = await productService.createProduct(validationResult.data);
 
         return res.status(201).json({
             success: true,
@@ -14,13 +28,6 @@ const createProduct = async (req: Request, res: Response) => {
             data: product,
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,
@@ -30,8 +37,22 @@ const createProduct = async (req: Request, res: Response) => {
 
 const getProductById = async (req: Request, res: Response) => {
     try {
-        const { id } = productIdParamSchema.parse(req.params);
-        const product = await productService.getProductById(id);
+        const validationResult = productIdParamSchema.safeParse(req.params);
+
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const product = await productService.getProductById(validationResult.data.id);
 
         return res.status(200).json({
             success: true,
@@ -39,13 +60,6 @@ const getProductById = async (req: Request, res: Response) => {
             data: product,
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,
@@ -72,22 +86,28 @@ const getAllProducts = async (_req: Request, res: Response) => {
 
 const deleteProduct = async (req: Request, res: Response) => {
     try {
-        const { id } = productIdParamSchema.parse(req.params);
+        const validationResult = productIdParamSchema.safeParse(req.params);
 
-        await productService.deleteProduct(id);
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        await productService.deleteProduct(validationResult.data.id);
 
         return res.status(200).json({
             success: true,
             message: "Product deleted successfully",
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,

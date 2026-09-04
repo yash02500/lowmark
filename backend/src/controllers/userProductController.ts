@@ -36,13 +36,6 @@ const trackProduct = async (req: Request, res: Response) => {
             data: userProduct,
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,
@@ -96,13 +89,6 @@ const getTrackedProductById = async (req: Request, res: Response) => {
             data: product,
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,
@@ -139,13 +125,6 @@ const untrackProduct = async (req: Request, res: Response) => {
             message: "Product untracked successfully",
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,
@@ -215,13 +194,6 @@ const getProductInsightById = async (req: Request, res: Response) => {
             data: insight,
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,

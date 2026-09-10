@@ -176,8 +176,79 @@ const sendPasswordResetEmail = async (
     });
 };
 
+const sendNotificationEmail = async (
+    email: string,
+    name: string,
+    title: string,
+    message: string,
+    productId: number
+) => {
+    const frontendUrl =
+        process.env.FRONTEND_URL || "http://localhost:3000";
+
+    const productUrl =
+        `${frontendUrl}/product/${productId}`;
+
+    await transporter.sendMail({
+        from: emailFrom,
+        to: email,
+        subject: `Lowmark: ${title}`,
+
+        text: `
+Hi ${name},
+
+${message}
+
+View product:
+${productUrl}
+
+Thanks,
+Lowmark
+        `.trim(),
+
+        html: `
+            <div style="
+                font-family: Arial, sans-serif;
+                max-width: 600px;
+                margin: 0 auto;
+                line-height: 1.6;
+            ">
+                <h2>${title}</h2>
+
+                <p>Hi ${name},</p>
+
+                <p>
+                    ${message}
+                </p>
+
+                <p>
+                    <a
+                        href="${productUrl}"
+                        style="
+                            display: inline-block;
+                            padding: 12px 20px;
+                            background: #4f46e5;
+                            color: #ffffff;
+                            text-decoration: none;
+                            border-radius: 8px;
+                        "
+                    >
+                        View Product
+                    </a>
+                </p>
+
+                <p>
+                    Thanks,<br />
+                    Lowmark
+                </p>
+            </div>
+        `.trim(),
+    });
+};
+
 export default {
     sendVerificationEmail,
     verifyConnection,
     sendPasswordResetEmail,
+    sendNotificationEmail
 };

@@ -2,6 +2,8 @@ import { Worker, Job } from "bullmq";
 import redisConnection from "../config/redis";
 import notificationService from "../services/notificationService";
 import pushNotificationService from "../services/pushNotificationService";
+import authRepository from "../repositories/authRepository";
+import emailService from "../services/emailService";
 
 interface NotificationJobData {
     userId: number;
@@ -27,19 +29,30 @@ const notificationWorker =
                 `Processing notification for user ${userId}, product ${productId}`
             );
 
-            const notification =
-                await notificationService.createNotification({
-                    userId,
-                    productId,
-                    type,
-                    title,
-                    message,
-                });
+            // Get user details
+            const user = await authRepository.findUserById(userId);
+
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            const email = user.getDataValue("email") as string;
+            const name = user.getDataValue("name") as string;
+
+            // Create database notification
+            const notification = await notificationService.createNotification({
+                userId,
+                productId,
+                type,
+                title,
+                message,
+            });
 
             console.log(
                 `Notification created: ${notification.getDataValue("id")}`
             );
 
+            // Send push notification
             await pushNotificationService.sendPushNotification({
                 userId,
                 title,
@@ -49,6 +62,19 @@ const notificationWorker =
 
             console.log(
                 `Push notification processed for user ${userId}`
+            );
+
+            // Send email notification
+            await emailService.sendNotificationEmail(
+                email,
+                name,
+                title,
+                message,
+                productId
+            );
+
+            console.log(
+                `Email notification processed for user ${userId}`
             );
 
             return notification;

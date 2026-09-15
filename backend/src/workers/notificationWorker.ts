@@ -1,9 +1,8 @@
 import { Worker, Job } from "bullmq";
 import redisConnection from "../config/redis";
 import notificationService from "../services/notificationService";
-import pushNotificationService from "../services/pushNotificationService";
-import authRepository from "../repositories/authRepository";
-import emailService from "../services/emailService";
+import pushNotificationQueue from "../queues/pushNotificationQueue";
+import emailNotificationQueue from "../queues/emailNotificationQueue";
 
 interface NotificationJobData {
     userId: number;
@@ -25,56 +24,33 @@ const notificationWorker =
                 message,
             } = job.data;
 
-            console.log(
-                `Processing notification for user ${userId}, product ${productId}`
+            const notification =
+                await notificationService.createNotification({
+                    userId,
+                    productId,
+                    type,
+                    title,
+                    message,
+                });
+
+            await pushNotificationQueue.add(
+                "send-push",
+                {
+                    userId,
+                    productId,
+                    title,
+                    message,
+                }
             );
 
-            // Get user details
-            const user = await authRepository.findUserById(userId);
-
-            if (!user) {
-                throw new Error("User not found");
-            }
-
-            const email = user.getDataValue("email") as string;
-            const name = user.getDataValue("name") as string;
-
-            // Create database notification
-            const notification = await notificationService.createNotification({
-                userId,
-                productId,
-                type,
-                title,
-                message,
-            });
-
-            console.log(
-                `Notification created: ${notification.getDataValue("id")}`
-            );
-
-            // Send push notification
-            await pushNotificationService.sendPushNotification({
-                userId,
-                title,
-                message,
-                url: `/product/${productId}`,
-            });
-
-            console.log(
-                `Push notification processed for user ${userId}`
-            );
-
-            // Send email notification
-            await emailService.sendNotificationEmail(
-                email,
-                name,
-                title,
-                message,
-                productId
-            );
-
-            console.log(
-                `Email notification processed for user ${userId}`
+            await emailNotificationQueue.add(
+                "send-email",
+                {
+                    userId,
+                    productId,
+                    title,
+                    message,
+                }
             );
 
             return notification;

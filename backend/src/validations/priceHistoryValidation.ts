@@ -10,7 +10,6 @@ export const productIdParamSchema = z.object({
 export const recordPriceSchema = z.object({
     price: z.coerce
         .number()
-        .finite("Price must be a valid number")
         .nonnegative("Price cannot be negative"),
 
     recordedAt: z.preprocess(

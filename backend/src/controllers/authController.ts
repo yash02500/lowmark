@@ -1,15 +1,28 @@
 import { Request, Response } from "express";
 import authService from "../services/authService";
 import z from "zod";
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, updateMeSchema, refreshTokenSchema, verifyEmailSchema} from "../validations/authValidation";
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, updateMeSchema, refreshTokenSchema, verifyEmailSchema } from "../validations/authValidation";
 import emailVerificationService from "../services/emailVerificationService";
 import passwordResetService from "../services/passwordResetService";
 
 const register = async (req: Request, res: Response) => {
     try {
-        const registerData = registerSchema.parse(req.body);
+        const validationResult = registerSchema.safeParse(req.body);
 
-        const user = await authService.register(registerData);
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const user = await authService.register(validationResult.data);
 
         return res.status(201).json({
             success: true,
@@ -17,13 +30,6 @@ const register = async (req: Request, res: Response) => {
             data: user,
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,
@@ -33,8 +39,22 @@ const register = async (req: Request, res: Response) => {
 
 const login = async (req: Request, res: Response) => {
     try {
-        const loginData = loginSchema.parse(req.body);
-        const user = await authService.login(loginData);
+        const validationResult = loginSchema.safeParse(req.body);
+
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const user = await authService.login(validationResult.data);
 
         return res.status(200).json({
             success: true,
@@ -42,13 +62,6 @@ const login = async (req: Request, res: Response) => {
             data: user,
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,
@@ -91,8 +104,7 @@ const updateMe = async (req: Request, res: Response) => {
             });
         }
 
-        const updatedUser =
-            await authService.updateMe(
+        const updatedUser = await authService.updateMe(
                 userId,
                 validationResult.data,
             );
@@ -228,9 +240,7 @@ const forgotPassword = async (req: Request, res: Response) => {
     try {
         const { email } = forgotPasswordSchema.parse(req.body);
 
-        await passwordResetService.requestPasswordReset(
-            email
-        );
+        await passwordResetService.requestPasswordReset(email);
 
         return res.status(200).json({
             success: true,
@@ -254,26 +264,31 @@ const forgotPassword = async (req: Request, res: Response) => {
 
 const resetPassword = async (req: Request, res: Response) => {
     try {
-        const { token, password } = resetPasswordSchema.parse(req.body);
+        const validationResult = resetPasswordSchema.safeParse(req.body);
+
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
 
         await passwordResetService.resetPassword(
-            token,
-            password
+            validationResult.data.token,
+            validationResult.data.password
         );
 
         return res.status(200).json({
             success: true,
-            message:
-                "Password reset successfully",
+            message: "Password reset successfully",
         });
     } catch (error: any) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                success: false,
-                message: error.issues[0].message,
-            });
-        }
-
         return res.status(404).json({
             success: false,
             message: error.message,

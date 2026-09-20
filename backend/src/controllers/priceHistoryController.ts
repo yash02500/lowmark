@@ -1,15 +1,46 @@
 import { Request, Response } from "express";
 import priceHistoryService from "../services/priceHistoryService";
+import { productIdParamSchema, recordPriceSchema } from "../validations/priceHistoryValidation";
 
 const recordPrice = async (req: Request, res: Response) => {
     try {
-        const productId = Number(req.params.productId);
-        const { price, recordedAt } = req.body;
+        const productIdResult = productIdParamSchema.safeParse(req.params);
+
+        if (!productIdResult.success) {
+            const errors = productIdResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const validationResult = recordPriceSchema.safeParse(req.body);
+
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const { productId } = productIdResult.data;
+        const { price, recordedAt } = validationResult.data;
 
         const result = await priceHistoryService.recordPrice(
             productId,
-            Number(price),
-            recordedAt ? new Date(recordedAt) : undefined
+            price,
+            recordedAt
         );
 
         return res.status(200).json({
@@ -29,7 +60,23 @@ const recordPrice = async (req: Request, res: Response) => {
 
 const getPriceHistory = async (req: Request, res: Response) => {
     try {
-        const productId = Number(req.params.productId);
+        const validationResult = productIdParamSchema.safeParse(req.params);
+
+        if (!validationResult.success) {
+            const errors =
+                validationResult.error.issues.map((err) => ({
+                    field: err.path.join("."),
+                    message: err.message,
+                }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const { productId } = validationResult.data;
         const userId = req.userId!;
 
         const priceHistory = await priceHistoryService.getPriceHistory(productId, userId);
@@ -49,7 +96,23 @@ const getPriceHistory = async (req: Request, res: Response) => {
 
 const getLatestPrice = async (req: Request, res: Response) => {
     try {
-        const productId = Number(req.params.productId);
+        const validationResult = productIdParamSchema.safeParse(req.params);
+
+        if (!validationResult.success) {
+            const errors =
+                validationResult.error.issues.map((err) => ({
+                    field: err.path.join("."),
+                    message: err.message,
+                }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const { productId } = validationResult.data;
         const userId = req.userId!;
 
         const latestPrice = await priceHistoryService.getLatestPrice(productId, userId);

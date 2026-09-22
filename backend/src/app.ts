@@ -1,5 +1,5 @@
 import express  from "express";
-import cors from "cors";
+import corsMiddleware from "./config/cors";
 import authRoutes from "./routes/authRoutes"
 import productRoutes from "./routes/productRoutes";
 import userProductRoutes from "./routes/userProductRoutes";
@@ -8,7 +8,7 @@ import notificationRoute from "./routes/notificationRoute";
 import pushSubscriptionRoutes from "./routes/pushSubscriptionRoutes";
 
 const app = express();
-app.use(cors());
+app.use(corsMiddleware);
 app.use(express.json());
 
 // Routes

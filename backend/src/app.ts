@@ -1,5 +1,6 @@
 import express  from "express";
 import corsMiddleware from "./config/cors";
+import globalRateLimiter from "./config/rateLimiter";
 import authRoutes from "./routes/authRoutes"
 import productRoutes from "./routes/productRoutes";
 import userProductRoutes from "./routes/userProductRoutes";
@@ -10,6 +11,7 @@ import pushSubscriptionRoutes from "./routes/pushSubscriptionRoutes";
 const app = express();
 app.use(corsMiddleware);
 app.use(express.json());
+app.use(globalRateLimiter);
 
 // Routes
 app.use("/api/auth", authRoutes);

@@ -2,6 +2,7 @@ import { ScrapedProductData } from "./types";
 
 interface BrightDataFlipkartProduct {
     title?: string;
+    name?: string;
     image_url?: string;
     price?: string | number | null;
     sale_price?: string | number | null;
@@ -139,7 +140,7 @@ class BrightDataFlipkartScraper {
                 );
             }
 
-            const title = product.title?.trim();
+            const title = product.name?.trim() || product.title?.trim();
             const imageUrl = product.image_url?.trim();
 
             const price = parsePrice(

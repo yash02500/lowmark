@@ -1,6 +1,48 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import authService from "@/src/services/authService";
 
 const HomePage = () => {
+    const router = useRouter();
+    const [checkingAuth, setCheckingAuth] = useState(true);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            const accessToken = localStorage.getItem("accessToken");
+
+            const refreshToken = localStorage.getItem("refreshToken");
+
+            // No saved session => show public home page
+            if (!accessToken && !refreshToken) {
+                setCheckingAuth(false);
+                return;
+            }
+
+            try {
+                await authService.getMe();
+                router.replace("/dashboard");
+            } catch (error) {
+                // No valid session => show public home page
+                setCheckingAuth(false);
+            }
+        };
+
+        checkAuth();
+    }, [router]);
+
+    if(checkingAuth) {
+        return (
+            <main className="flex min-h-screen items-center justify-center bg-slate-50">
+                <p className="text-sm text-slate-500">
+                    Loading Lowmark...
+                </p>
+            </main>
+        );
+    }
+
     return (
         <main className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
             {/* Navbar */}

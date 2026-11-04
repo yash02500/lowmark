@@ -7,7 +7,7 @@ const processDueProducts = async () => {
 
     for (const product of products) {
         const productId = product.getDataValue("id");
-        const priority = product.getDataValue("priority") || 10;
+        const priority = product.getDataValue("priority") ?? 10;
 
         try {
             const jobId = `product-${productId}`;

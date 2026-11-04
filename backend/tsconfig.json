@@ -11,14 +11,23 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
+<<<<<<< Updated upstream
   "include": [
     "src"
   ],
+=======
+  "include": ["src"],
+>>>>>>> Stashed changes
   "exclude": [
     "node_modules",
     "dist",
     "**/*.test.ts",
     "**/*.spec.ts",
     "**/__tests__/**"
+<<<<<<< Updated upstream
   ]
 }
+=======
+ ]
+}
+>>>>>>> Stashed changes

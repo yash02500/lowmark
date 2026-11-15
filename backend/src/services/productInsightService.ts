@@ -8,6 +8,10 @@ const getUserProductsInsight = async (userId: number) => {
     if (userProducts.length === 0) {
         return {
             trackedProductCount: 0,
+            priceDropCount: 0,
+            nearTargetCount: 0,
+            targetReachedCount: 0,
+            products: [],
             summary: "You are not tracking any products yet.",
         };
     }
@@ -60,12 +64,31 @@ const getUserProductsInsight = async (userId: number) => {
         });
     }
 
+    // Count products whose current price is below their previous recorded price
+    const priceDropCount = productInsights.filter(product =>
+        product.priceChange !== null &&
+        product.priceChange < 0
+    ).length;
+
+    // Count products that are above their target but within 10%
+    const nearTargetCount = productInsights.filter(
+        product => product.targetStatus === "close"
+    ).length;
+
+    // Count products whose current price has reached or crossed the target
+    const targetReachedCount = productInsights.filter(
+        product => product.targetStatus === "reached"
+    ).length;
+
     const summary = await aiService.generateTrackedProductsInsight(productInsights);
 
     return {
         trackedProductCount: productInsights.length,
         products: productInsights,
         summary,
+        priceDropCount,
+        nearTargetCount,
+        targetReachedCount,
     };
 };
 

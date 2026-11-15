@@ -17,116 +17,136 @@ const DashboardPage = () => {
     const [error, setError] = useState("");
     const [insights, setInsights] = useState<InsightsData | null>(null);
     const [attention, setAttention] =
-    useState<AttentionData | null>(null);
+        useState<AttentionData | null>(null);
 
- useEffect(() => {
-    const fetchDashboardData = async () => {
-        const accessToken =
-            localStorage.getItem("accessToken");
+    useEffect(() => {
 
-        if (!accessToken) {
-            router.replace("/login");
-            return;
-        }
+        const fetchDashboardData = async () => {
+            const accessToken =
+                localStorage.getItem("accessToken");
 
-        try {
-            setLoading(true);
-            setError("");
+            if (!accessToken) {
+                router.replace("/login");
+                return;
+            }
 
-            // Products should always be refreshed
-            const productsResponse =
-                await userProductService.getTrackedProducts();
+            try {
+                setLoading(true);
+                setError("");
 
-            setProducts(productsResponse.data);
+                // Products should always be refreshed
+                const productsResponse =
+                    await userProductService.getTrackedProducts();
 
-            // Check whether AI dashboard data is cached
-            const cachedInsights =
-                sessionStorage.getItem("dashboardInsights");
+                setProducts(productsResponse.data);
 
-            const cachedAttention =
-                sessionStorage.getItem("dashboardAttention");
+                // Check whether AI dashboard data is cached
+                const cachedInsights =
+                    sessionStorage.getItem("dashboardInsights");
 
-            const cachedAt =
-                sessionStorage.getItem("dashboardAI_cachedAt");
+                const cachedAttention =
+                    sessionStorage.getItem("dashboardAttention");
 
-            const CACHE_DURATION = 30 * 60 * 1000; // 15 minutes
+                const cachedAt =
+                    sessionStorage.getItem("dashboardAI_cachedAt");
 
-            const cacheIsValid =
-                cachedAt &&
-                Date.now() - Number(cachedAt) <
+                const CACHE_DURATION = 30 * 60 * 1000; // 15 minutes
+
+                const cacheIsValid =
+                    cachedAt &&
+                    Date.now() - Number(cachedAt) <
                     CACHE_DURATION;
 
-            if (
-                cacheIsValid &&
-                cachedInsights &&
-                cachedAttention
-            ) {
-                // Use cached AI data
-                setInsights(
-                    JSON.parse(cachedInsights)
+                if (
+                    cacheIsValid &&
+                    cachedInsights &&
+                    cachedAttention
+                ) {
+                    // Use cached AI data
+                    setInsights(
+                        JSON.parse(cachedInsights)
+                    );
+
+                    setAttention(
+                        JSON.parse(cachedAttention)
+                    );
+
+                    console.log(
+                        "Using cached AI dashboard data"
+                    );
+
+                    return;
+                }
+
+                // Cache expired or doesn't exist.
+                // Fetch fresh AI data.
+                const [
+                    insightsResponse,
+                    attentionResponse,
+                ] = await Promise.all([
+                    userProductService.getInsights(),
+                    userProductService.getAttention(),
+                ]);
+
+                setInsights(insightsResponse.data);
+                setAttention(attentionResponse.data);
+
+                // Save AI responses in sessionStorage
+                sessionStorage.setItem(
+                    "dashboardInsights",
+                    JSON.stringify(
+                        insightsResponse.data
+                    )
                 );
 
-                setAttention(
-                    JSON.parse(cachedAttention)
+                sessionStorage.setItem(
+                    "dashboardAttention",
+                    JSON.stringify(
+                        attentionResponse.data
+                    )
                 );
 
-                console.log(
-                    "Using cached AI dashboard data"
+                sessionStorage.setItem(
+                    "dashboardAI_cachedAt",
+                    Date.now().toString()
                 );
 
-                return;
+            } catch (error: any) {
+                if (error.response?.status === 401) {
+                    return;
+                }
+
+                setError(
+                    error.response?.data?.message ||
+                    "Failed to load dashboard data"
+                );
+            } finally {
+                setLoading(false);
             }
+        };
 
-            // Cache expired or doesn't exist.
-            // Fetch fresh AI data.
-            const [
-                insightsResponse,
-                attentionResponse,
-            ] = await Promise.all([
-                userProductService.getInsights(),
-                userProductService.getAttention(),
-            ]);
+        fetchDashboardData();
+    }, [router]);
 
-            setInsights(insightsResponse.data);
-            setAttention(attentionResponse.data);
+    // Dashboard statistics from structured backend insights
+    const insightProducts = insights?.products ?? [];
 
-            // Save AI responses in sessionStorage
-            sessionStorage.setItem(
-                "dashboardInsights",
-                JSON.stringify(
-                    insightsResponse.data
-                )
-            );
+    // Products with a lower price than their previous recorded price
+    const priceDropCount = insightProducts.filter(
+        (product) =>
+            product.priceChange !== null &&
+            product.priceChange < 0
+    ).length;
 
-            sessionStorage.setItem(
-                "dashboardAttention",
-                JSON.stringify(
-                    attentionResponse.data
-                )
-            );
+    // Products currently within 10% above their target price
+    const nearTargetCount = insightProducts.filter(
+        (product) => product.targetStatus === "close"
+    ).length;
 
-            sessionStorage.setItem(
-                "dashboardAI_cachedAt",
-                Date.now().toString()
-            );
-
-        } catch (error: any) {
-            if (error.response?.status === 401) {
-                return;
-            }
-
-            setError(
-                error.response?.data?.message ||
-                "Failed to load dashboard data"
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    fetchDashboardData();
-}, [router]);
-
+    // Products whose current price has reached or gone below target
+    const targetReachedCount = insightProducts.filter(
+        (product) => product.targetStatus === "reached"
+    ).length;
     return (
         <div className="min-h-screen overflow-x-hidden bg-slate-50">
             <Sidebar />
@@ -144,7 +164,10 @@ const DashboardPage = () => {
                     </p>
 
                     {/* Stats */}
-                    <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+                    {/* Dashboard Stats */}
+                    <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
                         <StatCard
                             title="Tracked Products"
                             value={products.length}
@@ -153,29 +176,26 @@ const DashboardPage = () => {
 
                         <StatCard
                             title="Price Drops"
-                            value={
-                                insights?.products?.filter(
-                                    (product) =>
-                                        product.priceChange !== null &&
-                                        product.priceChange < 0
-                                ).length ?? 0
-                            }
-                            description="Coming from price analytics"
+                            value={priceDropCount}
+                            description="Lower than previous recorded price"
                         />
 
                         <StatCard
                             title="Near Target"
-                            value={
-                                insights?.products?.filter(
-                                    (product) =>
-                                        product.targetStatus === "close"
-                                ).length ?? 0
-                            }
-                            description="Coming from tracking analysis"
+                            value={nearTargetCount}
+                            description="Within 10% above your target"
                         />
+
+                        <StatCard
+                            title="Target Reached"
+                            value={targetReachedCount}
+                            description="At or below your target price"
+                        />
+
                     </div>
 
-                    {/* Ai insight */}        
+
+                    {/* Ai insight */}
                     <section className="mt-8">
                         <h2 className="text-xl font-semibold">
                             AI Insight
@@ -209,46 +229,45 @@ const DashboardPage = () => {
                                 </span>
                             )}
                         </div>
-                    {attention?.summary && (
-                        <div className="mt-4 space-y-3">
-                            {attention?.attentionItems.length ? (
-                                attention.attentionItems.map((item, index) => (
-                                    <div
-                                        key={`${item.productId}-${item.type}-${index}`}
-                                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
-                                    >
-                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                            <div>
-                                                <h3 className="font-semibold">
-                                                    {item.title}
-                                                </h3>
+                        {attention?.summary && (
+                            <div className="mt-4 space-y-3">
+                                {attention?.attentionItems.length ? (
+                                    attention.attentionItems.map((item, index) => (
+                                        <div
+                                            key={`${item.productId}-${item.type}-${index}`}
+                                            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+                                        >
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                <div>
+                                                    <h3 className="font-semibold">
+                                                        {item.title}
+                                                    </h3>
 
-                                                <p className="mt-1 text-sm text-gray-600">
-                                                    {item.message}
-                                                </p>
-                                            </div>
+                                                    <p className="mt-1 text-sm text-gray-600">
+                                                        {item.message}
+                                                    </p>
+                                                </div>
 
-                                            <span
-                                                className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${
-                                                    item.priority === "high"
+                                                <span
+                                                    className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${item.priority === "high"
                                                         ? "bg-red-100 text-red-700"
                                                         : "bg-yellow-100 text-yellow-700"
-                                                }`}
-                                            >
-                                                {item.priority}
-                                            </span>
+                                                        }`}
+                                                >
+                                                    {item.priority}
+                                                </span>
+                                            </div>
                                         </div>
+                                    ))
+                                ) : (
+                                    <div className="rounded-xl border bg-white p-5">
+                                        <p className="text-gray-500">
+                                            No products currently need attention.
+                                        </p>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="rounded-xl border bg-white p-5">
-                                    <p className="text-gray-500">
-                                        No products currently need attention.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
+                            </div>
+                        )}
                     </section>
 
                     {/* Tracked Products */}
@@ -313,11 +332,10 @@ const DashboardPage = () => {
                                                         </span>
 
                                                         <span
-                                                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                                                product.trackingState === "in_stock"
-                                                                    ? "bg-green-100 text-green-700"
-                                                                    : "bg-red-100 text-red-700"
-                                                            }`}
+                                                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${product.trackingState === "in_stock"
+                                                                ? "bg-green-100 text-green-700"
+                                                                : "bg-red-100 text-red-700"
+                                                                }`}
                                                         >
                                                             {product.trackingState.replace("_", " ")}
                                                         </span>

@@ -143,7 +143,7 @@ const ProductsPage = () => {
                             </p>
 
                             <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
-                                <Info className="h-4 w-4 shrink-0 text-emerald-600" />
+                                <Info className="h-4 w-4 shrink-0 text-amber-300" />
                                 <span>
                                     Only products from supported online stores can be tracked.
                                 </span>

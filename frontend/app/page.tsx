@@ -76,39 +76,46 @@ function DashboardPreview() {
 
             {/* Desktop dashboard */}
             <div className="relative rounded-2xl border border-slate-600/80 bg-[#071b1b] p-2 shadow-2xl shadow-black/50 sm:rounded-[26px] sm:p-3">
-                <div className="grid min-h-85 grid-cols-[105px_1fr] overflow-hidden rounded-xl bg-[#061515] sm:min-h-97.5 sm:grid-cols-[145px_1fr]">
+
+                <div className="grid min-h-85 grid-cols-[56px_minmax(0,1fr)] overflow-hidden rounded-xl bg-[#061515] sm:min-h-97.5 sm:grid-cols-[145px_minmax(0,1fr)]">
                     {/* Sidebar */}
-                    <aside className="border-r border-white/5 bg-[#061313] p-3 sm:p-4">
-                        <div className="mb-8 flex items-center gap-2 text-sm font-bold text-white">
-                            <Tag size={17} className="fill-emerald-400 text-emerald-400" />
-                            <span>LowMark</span>
+
+                    {/* Sidebar */}
+                    <aside className="border-r border-white/5 bg-[#061313] p-2 sm:p-4">
+                        <div className="mb-8 flex items-center justify-center gap-2 text-sm font-bold text-white sm:justify-start">
+                            <Tag
+                                size={17}
+                                className="shrink-0 fill-emerald-400 text-emerald-400"
+                            />
+                            <span className="hidden sm:inline">LowMark</span>
                         </div>
 
                         <div className="space-y-2 text-[10px] sm:text-xs">
-                            <div className="flex items-center gap-2 rounded-lg bg-emerald-500/20 px-2 py-2.5 text-emerald-300">
-                                <ChartLine size={14} />
-                                <span>Dashboard</span>
+                            <div className="flex items-center justify-center gap-2 rounded-lg bg-emerald-500/20 px-2 py-2.5 text-emerald-300 sm:justify-start">
+                                <ChartLine size={14} className="shrink-0" />
+                                <span className="hidden sm:inline">Dashboard</span>
                             </div>
 
-                            <div className="flex items-center gap-2 px-2 py-2 text-slate-400">
-                                <Package size={14} />
-                                <span>Products</span>
+                            <div className="flex items-center justify-center gap-2 px-2 py-2 text-slate-400 sm:justify-start">
+                                <Package size={14} className="shrink-0" />
+                                <span className="hidden sm:inline">Products</span>
                             </div>
 
-                            <div className="flex items-center gap-2 px-2 py-2 text-slate-400">
-                                <Bell size={14} />
-                                <span>Notifications</span>
-                                <span className="ml-auto rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] text-black">
+                            <div className="flex items-center justify-center gap-2 px-2 py-2 text-slate-400 sm:justify-start">
+                                <Bell size={14} className="shrink-0" />
+                                <span className="hidden sm:inline">Notifications</span>
+                                <span className="ml-auto hidden rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] text-black sm:inline">
                                     3
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-2 px-2 py-2 text-slate-400">
-                                <ShieldCheck size={14} />
-                                <span>Profile</span>
+                            <div className="flex items-center justify-center gap-2 px-2 py-2 text-slate-400 sm:justify-start">
+                                <ShieldCheck size={14} className="shrink-0" />
+                                <span className="hidden sm:inline">Profile</span>
                             </div>
                         </div>
                     </aside>
+
 
                     {/* Dashboard content */}
                     <div className="min-w-0 p-3 sm:p-5">
@@ -148,7 +155,7 @@ function DashboardPreview() {
 
                             <div className="rounded-xl border border-white/5 bg-[#102626] p-2.5 sm:p-3">
                                 <Zap size={17} className="text-emerald-400" />
-                                <p className="mt-3 text-lg font-bold text-white sm:text-2xl">
+                                <p className="mt-3 whitespace-nowrap text-sm font-bold text-white sm:text-2xl">
                                     ₹3,842
                                 </p>
                                 <p className="text-[9px] text-slate-400 sm:text-xs">
@@ -252,7 +259,9 @@ function DashboardPreview() {
             </div>
 
             {/* Floating notification */}
-            <div className="absolute -bottom-7 -right-2 w-38.75 rounded-2xl border border-emerald-400/30 bg-[#102626] p-3 shadow-2xl shadow-black/50 sm:-right-8 sm:bottom-6 sm:w-51.25 sm:p-4">
+
+            {/* Floating notification */}
+            <div className="relative mx-auto mt-4 w-full max-w-60 rounded-2xl border border-emerald-400/30 bg-[#102626] p-3 shadow-2xl shadow-black/50 sm:absolute sm:-bottom-7 sm:-right-8 sm:mt-0 sm:w-51.25 sm:max-w-none sm:p-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
                     <Bell size={19} />
                 </div>
@@ -269,12 +278,14 @@ function DashboardPreview() {
                     <span className="text-sm font-bold text-white sm:text-base">
                         ₹24,999
                     </span>
+
                     <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-400">
                         <ArrowDown size={11} />
                         18%
                     </span>
                 </div>
             </div>
+
 
             <div className="absolute -left-5 top-10 hidden rounded-xl border border-white/10 bg-[#102626] p-3 shadow-xl sm:block">
                 <div className="flex items-center gap-2">
@@ -343,13 +354,12 @@ const HomePage = () => {
 
                 {/* Navbar */}
                 <header className="relative z-10 border-b border-white/[0.07]">
-                    <nav className="mx-auto flex h-19 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
-                        <Link href="/" className="inline-flex items-center">
-                            <BrandLogo
-                                iconSize="h-11 w-11"
-                                textSize="text-2xl"
-                            />
-                        </Link>
+                    <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:h-19 sm:gap-4 sm:px-8 lg:px-10">                        <Link href="/" className="inline-flex items-center">
+                        <BrandLogo
+                            iconSize="h-10 w-10 sm:h-11 sm:w-11"
+                            textSize="text-xl sm:text-2xl"
+                        />
+                    </Link>
 
                         <div className="hidden items-center gap-8 text-sm font-medium text-slate-300 md:flex">
                             <a href="#home" className="text-emerald-400">
@@ -366,21 +376,23 @@ const HomePage = () => {
                             </a>
                         </div>
 
-                        <div className="flex items-center gap-2 sm:gap-3">
+
+                        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                             <Link
                                 href="/login"
-                                className="rounded-xl border border-emerald-400/40 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400/10 sm:px-6"
+                                className="whitespace-nowrap rounded-xl border border-emerald-400/40 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-400/10 sm:px-6 sm:text-sm"
                             >
                                 Log In
                             </Link>
 
                             <Link
                                 href="/register"
-                                className="rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-bold text-[#041514] transition hover:bg-emerald-300 sm:px-6"
+                                className="whitespace-nowrap rounded-xl bg-emerald-400 px-3 py-2.5 text-xs font-bold text-[#041514] transition hover:bg-emerald-300 sm:px-6 sm:text-sm"
                             >
                                 Get Started
                             </Link>
                         </div>
+
                     </nav>
                 </header>
 

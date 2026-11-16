@@ -1,6 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import {
+    UserRound,
+    Mail,
+    CalendarDays,
+    ShieldCheck,
+    ShieldAlert,
+    Save,
+    LoaderCircle,
+    CheckCircle2,
+    Sparkles,
+} from "lucide-react";
 
 import Sidebar from "@/src/components/sidebar";
 import Navbar from "@/src/components/navbar";
@@ -16,8 +28,7 @@ interface UserProfile {
 }
 
 const ProfilePage = () => {
-    const [profile, setProfile] =
-        useState<UserProfile | null>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -36,9 +47,7 @@ const ProfilePage = () => {
                 setLoading(true);
                 setError("");
 
-                const response =
-                    await authService.getMe();
-
+                const response = await authService.getMe();
                 const user = response.data;
 
                 setProfile(user);
@@ -61,40 +70,35 @@ const ProfilePage = () => {
         fetchProfile();
     }, []);
 
-    const handleSubmit = async (
-        event: React.FormEvent<HTMLFormElement>
-    ) => {
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        setError("");
+        setSuccess("");
+
+        if (!name.trim()) {
+            setError("Name is required.");
+            return;
+        }
+
+        if (!email.trim()) {
+            setError("Email is required.");
+            return;
+        }
 
         try {
             setSaving(true);
-            setError("");
-            setSuccess("");
 
-            if (!name.trim()) {
-                setError("Name is required");
-                return;
-            }
-
-            if (!email.trim()) {
-                setError("Email is required");
-                return;
-            }
-
-            const response =
-                await authService.updateMe({
-                    name: name.trim(),
-                    email: email.trim(),
-                });
+            const response = await authService.updateMe({
+                name: name.trim(),
+                email: email.trim(),
+            });
 
             setProfile(response.data);
-
             setName(response.data.name);
             setEmail(response.data.email);
 
-            setSuccess(
-                "Profile updated successfully."
-            );
+            setSuccess("Profile updated successfully.");
         } catch (error: any) {
             if (error.response?.status === 401) {
                 return;
@@ -115,8 +119,7 @@ const ProfilePage = () => {
             setError("");
             setSuccess("");
 
-            const response =
-                await authService.resendVerification();
+            const response = await authService.resendVerification();
 
             setSuccess(
                 response.message ||
@@ -138,193 +141,299 @@ const ProfilePage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50">
+            <div className="min-h-screen bg-[#f8faf9]">
                 <Sidebar />
 
-                <div className="md:ml-60">
+                <div className="md:ml-64">
                     <Navbar />
 
-                    <main className="p-4 pb-24 md:p-8 md:pb-8">
-                        <p className="text-slate-500">
-                            Loading profile...
-                        </p>
+                    <main className="p-4 md:p-8">
+                        <div className="mx-auto max-w-5xl animate-pulse space-y-6">
+                            <div className="h-8 w-40 rounded-lg bg-slate-200" />
+
+                            <div className="grid gap-6 md:grid-cols-[280px_1fr]">
+                                <div className="h-72 rounded-3xl bg-slate-200" />
+                                <div className="h-96 rounded-3xl bg-slate-200" />
+                            </div>
+                        </div>
                     </main>
                 </div>
             </div>
         );
     }
 
+    const initials =
+        profile?.name?.trim().charAt(0).toUpperCase() || "U";
+
     return (
-        <div className="min-h-screen overflow-x-hidden bg-slate-50">
+        <div className="min-h-screen overflow-x-hidden bg-[#f8faf9]">
             <Sidebar />
 
-            <div className="md:ml-60">
+            <div className="md:ml-64">
                 <Navbar />
 
-                <main className="p-4 pb-24 md:p-8 md:pb-8">
-                    <div className="mx-auto max-w-3xl">
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-                            Profile
-                        </h1>
+                <main className="px-4 py-6 pb-28 md:px-8 md:py-9 md:pb-10">
+                    <div className="mx-auto max-w-5xl">
+                        {/* Heading */}
+                        <div className="mb-8">
+                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                                <UserRound size={14} />
+                                Account settings
+                            </div>
 
-                        <p className="mt-2 text-slate-500">
-                            Manage your Lowmark account
-                            information.
-                        </p>
+                            <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+                                My Profile
+                            </h1>
 
+                            <p className="mt-2 text-sm text-slate-500">
+                                Manage your personal information and account
+                                settings.
+                            </p>
+                        </div>
+
+                        {/* Feedback */}
                         {error && (
-                            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                                {error}
+                            <div
+                                role="alert"
+                                className="mb-6 flex items-start gap-3 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"
+                            >
+                                <ShieldAlert
+                                    size={18}
+                                    className="mt-0.5 shrink-0"
+                                />
+                                <p>{error}</p>
                             </div>
                         )}
 
                         {success && (
-                            <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                                {success}
+                            <div
+                                role="status"
+                                className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700"
+                            >
+                                <CheckCircle2
+                                    size={18}
+                                    className="mt-0.5 shrink-0"
+                                />
+                                <p>{success}</p>
                             </div>
                         )}
 
-                        <div className="mt-8 grid gap-6 md:grid-cols-[220px_1fr]">
+                        <div className="grid items-start gap-6 md:grid-cols-[280px_1fr]">
                             {/* Profile summary */}
-                            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 text-3xl font-bold text-indigo-600">
-                                    {profile?.name
-                                        ?.charAt(0)
-                                        .toUpperCase() || "U"}
-                                </div>
+                            <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+                                <div className="h-24 bg-linear-to-r from-[#064e3b] to-[#10b981]" />
 
-                                <h2 className="mt-4 text-lg font-semibold text-slate-900">
-                                    {profile?.name}
-                                </h2>
+                                <div className="px-6 pb-6">
+                                    <div className="-mt-11 flex h-22 w-22 items-center justify-center rounded-2xl border-4 border-white bg-emerald-50 text-3xl font-bold text-emerald-700 shadow-sm">
+                                        {initials}
+                                    </div>
 
-                                <p className="mt-1 break-all text-sm text-slate-500">
-                                    {profile?.email}
-                                </p>
+                                    <h2 className="mt-4 wrap-break-word text-xl font-bold text-slate-950">
+                                        {profile?.name || "User"}
+                                    </h2>
 
-                                <div className="mt-5">
-                                    {profile?.emailVerified ? (
-                                        <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-                                            ✓ Email verified
-                                        </span>
-                                    ) : (
-                                        <div className="mt-3">
-                                            <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
-                                                ⚠ Email not verified
-                                            </span>
+                                    <p className="mt-1 break-all text-sm text-slate-500">
+                                        {profile?.email}
+                                    </p>
 
-                                            <button
-                                                type="button"
-                                                onClick={handleResendVerification}
-                                                disabled={resendLoading}
-                                                className="mt-3 block text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
-                                            >
-                                                {resendLoading
-                                                    ? "Sending..."
-                                                    : "Resend verification email"}
-                                            </button>
+                                    <div className="mt-5 border-t border-slate-100 pt-5">
+                                        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                            Account status
+                                        </p>
+
+                                        {profile?.emailVerified ? (
+                                            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3">
+                                                <ShieldCheck
+                                                    size={19}
+                                                    className="text-emerald-600"
+                                                />
+                                                <div>
+                                                    <p className="text-sm font-semibold text-emerald-800">
+                                                        Verified
+                                                    </p>
+                                                    <p className="text-xs text-emerald-600">
+                                                        Email verified
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="rounded-xl bg-amber-50 p-3">
+                                                <div className="flex items-center gap-2">
+                                                    <ShieldAlert
+                                                        size={19}
+                                                        className="text-amber-600"
+                                                    />
+                                                    <p className="text-sm font-semibold text-amber-800">
+                                                        Not verified
+                                                    </p>
+                                                </div>
+
+                                                <p className="mt-2 text-xs leading-5 text-amber-700">
+                                                    Verify your email to
+                                                    secure your account.
+                                                </p>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        handleResendVerification
+                                                    }
+                                                    disabled={resendLoading}
+                                                    className="mt-3 text-xs font-bold text-amber-800 underline underline-offset-4 hover:text-amber-950 disabled:opacity-50"
+                                                >
+                                                    {resendLoading
+                                                        ? "Sending..."
+                                                        : "Resend verification email"}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-5">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-500">
+                                            <CalendarDays size={17} />
                                         </div>
-                                    )}
+
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Member since
+                                            </p>
+                                            <p className="mt-0.5 text-sm font-semibold text-slate-700">
+                                                {profile?.createdAt
+                                                    ? new Date(
+                                                        profile.createdAt
+                                                    ).toLocaleDateString(
+                                                        "en-IN",
+                                                        {
+                                                            day: "numeric",
+                                                            month: "long",
+                                                            year: "numeric",
+                                                        }
+                                                    )
+                                                    : "—"}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </section>
 
                             {/* Edit profile */}
-                            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-                                <h2 className="text-lg font-semibold text-slate-900">
-                                    Account information
-                                </h2>
-
-                                <p className="mt-1 text-sm text-slate-500">
-                                    Update your name or email
-                                    address.
-                                </p>
-
-                                <form
-                                    onSubmit={handleSubmit}
-                                    className="mt-6 space-y-5"
-                                >
-                                    <div>
-                                        <label
-                                            htmlFor="name"
-                                            className="block text-sm font-medium text-slate-700"
-                                        >
-                                            Name
-                                        </label>
-
-                                        <input
-                                            id="name"
-                                            type="text"
-                                            value={name}
-                                            onChange={(event) =>
-                                                setName(
-                                                    event.target
-                                                        .value
-                                                )
-                                            }
-                                            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-600"
-                                        />
+                            <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm md:p-8">
+                                <div className="flex items-center gap-3 border-b border-slate-100 pb-6">
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                                        <UserRound size={21} />
                                     </div>
 
                                     <div>
+                                        <h2 className="font-bold text-slate-950">
+                                            Personal information
+                                        </h2>
+                                        <p className="mt-1 text-xs text-slate-400">
+                                            Update your account details
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <form
+                                    onSubmit={handleSubmit}
+                                    className="mt-7 space-y-6"
+                                >
+                                    {/* Name */}
+                                    <div>
                                         <label
-                                            htmlFor="email"
-                                            className="block text-sm font-medium text-slate-700"
+                                            htmlFor="name"
+                                            className="mb-2 block text-sm font-semibold text-slate-700"
                                         >
-                                            Email
+                                            Full name
                                         </label>
 
-                                        <input
-                                            id="email"
-                                            type="email"
-                                            value={email}
-                                            onChange={(event) =>
-                                                setEmail(
-                                                    event.target
-                                                        .value
-                                                )
-                                            }
-                                            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-600"
-                                        />
+                                        <div className="relative">
+                                            <UserRound
+                                                size={18}
+                                                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                                            />
+
+                                            <input
+                                                id="name"
+                                                type="text"
+                                                value={name}
+                                                onChange={(event) =>
+                                                    setName(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                placeholder="Enter your name"
+                                                autoComplete="name"
+                                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Email */}
+                                    <div>
+                                        <label
+                                            htmlFor="email"
+                                            className="mb-2 block text-sm font-semibold text-slate-700"
+                                        >
+                                            Email address
+                                        </label>
+
+                                        <div className="relative">
+                                            <Mail
+                                                size={18}
+                                                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                                            />
+
+                                            <input
+                                                id="email"
+                                                type="email"
+                                                value={email}
+                                                onChange={(event) =>
+                                                    setEmail(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                placeholder="Enter your email"
+                                                autoComplete="email"
+                                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+                                                required
+                                            />
+                                        </div>
 
                                         {!profile?.emailVerified && (
                                             <p className="mt-2 text-xs text-amber-600">
-                                                Your email is not
+                                                Your email address is not
                                                 verified.
                                             </p>
                                         )}
                                     </div>
 
-                                    <div className="border-t border-slate-100 pt-5">
-                                        <p className="text-xs text-slate-500">
-                                            Member since
-                                        </p>
-
-                                        <p className="mt-1 text-sm font-medium text-slate-700">
-                                            {profile?.createdAt
-                                                ? new Date(
-                                                    profile.createdAt
-                                                ).toLocaleDateString(
-                                                    "en-IN",
-                                                    {
-                                                        day: "numeric",
-                                                        month: "long",
-                                                        year: "numeric",
-                                                    }
-                                                )
-                                                : "—"}
-                                        </p>
+                                    {/* Save */}
+                                    <div className="flex justify-end border-t border-slate-100 pt-6">
+                                        <button
+                                            type="submit"
+                                            disabled={saving}
+                                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#087f5b] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/10 transition hover:bg-emerald-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                                        >
+                                            {saving ? (
+                                                <>
+                                                    <LoaderCircle
+                                                        size={17}
+                                                        className="animate-spin"
+                                                    />
+                                                    Saving changes...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Save size={17} />
+                                                    Save changes
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={saving}
-                                        className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                                    >
-                                        {saving
-                                            ? "Saving..."
-                                            : "Save Changes"}
-                                    </button>
                                 </form>
-                            </div>
+                            </section>
                         </div>
                     </div>
                 </main>

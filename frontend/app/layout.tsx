@@ -14,17 +14,35 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lowmark",
-  description: "Track prices and know the right time to buy",
+  title: {
+    default: "LowMark | Smart Price Tracker",
+    template: "%s | LowMark",
+  },
+  description:
+    "Track product prices, monitor price drops, view price history, and get notified when it's the right time to buy with LowMark.",
+  applicationName: "LowMark",
+  keywords: [
+    "LowMark",
+    "price tracker",
+    "price drop alerts",
+    "product price history",
+    "smart shopping",
+    "price monitoring",
+  ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: LayoutProps<"/">) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children} <AuthExpiredModal /></body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        <AuthExpiredModal />
+      </body>
     </html>
   );
 }

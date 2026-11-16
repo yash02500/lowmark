@@ -1,11 +1,19 @@
 "use client";
 
 import { Bell, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+
+const pageTitles: Record<string, string> = {
+    "/dashboard": "Dashboard",
+    "/products": "My Products",
+    "/notifications": "Notifications",
+    "/profile": "My Profile",
+};
 
 const Navbar = () => {
     const router = useRouter();
+    const pathname = usePathname();
 
     const handleLogout = () => {
         localStorage.removeItem("accessToken");
@@ -14,30 +22,50 @@ const Navbar = () => {
         router.push("/login");
     };
 
-    return (
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm md:px-8">            <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-                Dashboard
-            </h2>
-        </div>
+    const getPageTitle = () => {
+        if (pageTitles[pathname]) {
+            return pageTitles[pathname];
+        }
 
-            <div className="flex items-center gap-4">
+        if (pathname.startsWith("/product/")) {
+            return "Product Details";
+        }
+
+        return "LowMark";
+    };
+
+    return (
+        <header className="sticky top-0 z-30 flex h-18 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-xl md:px-8">
+            {/* Page title */}
+            <div className="min-w-0">
+                <h2 className="truncate text-lg font-bold tracking-tight text-slate-900 md:text-xl">
+                    {getPageTitle()}
+                </h2>
+                <p className="hidden text-xs text-slate-400 sm:block">
+                    Monitor prices. Make smarter purchases.
+                </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
                 <Link
                     href="/notifications"
-                    className="rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                    aria-label="View notifications"
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 ${pathname === "/notifications"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "bg-white"
+                        }`}
                 >
-                    <Bell size={20} />
+                    <Bell size={19} />
                 </Link>
 
                 <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                    className="flex h-10 items-center gap-2 rounded-xl bg-[#071b17] px-3.5 text-sm font-semibold text-white transition hover:bg-emerald-900 active:scale-[0.98]"
                 >
-                    <LogOut size={18} />
-                    <span className="hidden sm:block">
-                        Logout
-                    </span>
+                    <LogOut size={17} />
+                    <span className="hidden sm:block">Logout</span>
                 </button>
             </div>
         </header>

@@ -16,10 +16,7 @@ const getNotifications = async (req: Request, res: Response) => {
             data: notifications,
         });
     } catch (error: any) {
-        console.error(
-            "Get notifications error:",
-            error
-        );
+        console.error("Get notifications error:", error);
 
         return res.status(500).json({
             success: false,
@@ -28,14 +25,16 @@ const getNotifications = async (req: Request, res: Response) => {
     }
 };
 
-
 const markAsRead = async (req: Request, res: Response) => {
     try {
-        const validationResult = notificationIdParamSchema.safeParse(req.query);
+        // The notification ID comes from the URL: /:id/read
+        const validationResult = notificationIdParamSchema.safeParse(
+            req.params
+        );
 
         if (!validationResult.success) {
-            const errors = validationResult.error.issues.map(err => ({
-                field: err.path.join('.'),
+            const errors = validationResult.error.issues.map((err) => ({
+                field: err.path.join("."),
                 message: err.message,
             }));
 
@@ -45,14 +44,12 @@ const markAsRead = async (req: Request, res: Response) => {
                 errors,
             });
         }
+
         const userId = req.userId!;
         const { id } = validationResult.data;
 
         const notification =
-            await notificationService.markNotificationAsRead(
-                id,
-                userId
-            );
+            await notificationService.markNotificationAsRead(id, userId);
 
         return res.status(200).json({
             success: true,
@@ -67,7 +64,6 @@ const markAsRead = async (req: Request, res: Response) => {
     }
 };
 
-
 const markAllAsRead = async (req: Request, res: Response) => {
     try {
         const userId = req.userId!;
@@ -81,10 +77,7 @@ const markAllAsRead = async (req: Request, res: Response) => {
             message: result.message,
         });
     } catch (error: any) {
-        console.error(
-            "Mark all notifications as read error:",
-            error
-        );
+        console.error("Mark all notifications as read error:", error);
 
         return res.status(500).json({
             success: false,
@@ -93,14 +86,16 @@ const markAllAsRead = async (req: Request, res: Response) => {
     }
 };
 
-
 const deleteNotification = async (req: Request, res: Response) => {
     try {
-        const validationResult = notificationIdParamSchema.safeParse(req.query);
+        // The notification ID comes from the URL: /:id
+        const validationResult = notificationIdParamSchema.safeParse(
+            req.params
+        );
 
         if (!validationResult.success) {
-            const errors = validationResult.error.issues.map(err => ({
-                field: err.path.join('.'),
+            const errors = validationResult.error.issues.map((err) => ({
+                field: err.path.join("."),
                 message: err.message,
             }));
 
@@ -130,7 +125,6 @@ const deleteNotification = async (req: Request, res: Response) => {
         });
     }
 };
-
 
 export default {
     getNotifications,

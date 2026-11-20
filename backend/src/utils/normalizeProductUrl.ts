@@ -22,14 +22,28 @@ const normalizeProductUrl = (url: string): string => {
   }
 
   // Flipkart
-  if (hostname === "flipkart.com" || hostname === "www.flipkart.com") {
+  if (
+    hostname === "flipkart.com" ||
+    hostname === "www.flipkart.com"
+  ) {
     const pid = parsedUrl.searchParams.get("pid");
+    const lid = parsedUrl.searchParams.get("lid");
+
+    // Keep only product identifiers
+    const params = new URLSearchParams();
 
     if (pid) {
-      return `https://www.flipkart.com${parsedUrl.pathname}?pid=${pid}`;
+      params.set("pid", pid);
     }
 
-    return `https://www.flipkart.com${parsedUrl.pathname}`;
+    if (lid) {
+      params.set("lid", lid);
+    }
+
+    const queryString = params.toString();
+
+    return `https://www.flipkart.com${parsedUrl.pathname}${queryString ? `?${queryString}` : ""
+      }`;
   }
 
   // Generic fallback

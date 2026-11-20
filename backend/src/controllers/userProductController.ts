@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import userProductService from "../services/userProductService";
-import z from "zod";
+import z, { success } from "zod";
 import productInsightService from "../services/productInsightService";
-import { trackProductSchema, userProductIdParamSchema } from "../validations/userProductValidation";
+import { trackProductSchema, userProductIdParamSchema, updateTargetPriceSchema } from "../validations/userProductValidation";
 
 const trackProduct = async (req: Request, res: Response) => {
     try {
@@ -132,6 +132,61 @@ const untrackProduct = async (req: Request, res: Response) => {
     }
 };
 
+const updateTargetPrice = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId!;
+
+        const validationResult = userProductIdParamSchema.safeParse(req.params);
+
+        if (!validationResult.success) {
+            const errors = validationResult.error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message,
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const bodyValidation = updateTargetPriceSchema.safeParse(req.body);
+
+        if (!bodyValidation.success) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid target price",
+                errors: bodyValidation.error.issues.map((err) => ({
+                    field: err.path.join("."),
+                    message: err.message,
+                })),
+            });
+        }
+
+        const { id } = validationResult.data;
+        const { targetPrice } = bodyValidation.data;
+
+        const updatedProduct =
+            await userProductService.updateTargetPrice(
+                id,
+                userId,
+                targetPrice
+            );
+
+        return res.status(200).json({
+            success: true,
+            message: "Target price updated successfully",
+            data: updatedProduct,
+        });
+    } catch (error: any) {
+        return res.status(404).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 const getInsights = async (req: Request, res: Response) => {
     try {
         const userId = req.userId!;
@@ -205,6 +260,7 @@ export default {
     trackProduct,
     getTrackedProducts,
     getTrackedProductById,
+    updateTargetPrice,
     untrackProduct,
     getInsights,
     getAttention,

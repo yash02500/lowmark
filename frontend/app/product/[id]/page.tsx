@@ -16,6 +16,7 @@ import {
     CheckCircle2,
     AlertCircle,
     IndianRupee,
+    Pencil
 } from "lucide-react";
 
 import Sidebar from "@/src/components/sidebar";
@@ -42,6 +43,12 @@ const ProductDetailPage = () => {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    const [showEditTarget, setShowEditTarget] = useState(false);
+    const [newTargetPrice, setNewTargetPrice] = useState("");
+    const [updatingTarget, setUpdatingTarget] = useState(false);
+    const [targetError, setTargetError] = useState("");
+    const [targetSuccess, setTargetSuccess] = useState("");
 
     const [showUntrackConfirm, setShowUntrackConfirm] = useState(false);
     const [untracking, setUntracking] = useState(false);
@@ -92,6 +99,50 @@ const ProductDetailPage = () => {
 
         fetchProductData();
     }, [id]);
+
+    const handleUpdateTargetPrice = async () => {
+        const parsedTargetPrice = Number(newTargetPrice);
+
+        if (
+            !newTargetPrice.trim() ||
+            !Number.isFinite(parsedTargetPrice) ||
+            parsedTargetPrice <= 0
+        ) {
+            setTargetError("Please enter a valid target price.");
+            return;
+        }
+
+        try {
+            setUpdatingTarget(true);
+            setTargetError("");
+            setTargetSuccess("");
+
+            const response =
+                await userProductService.updateTargetPrice(
+                    id,
+                    parsedTargetPrice
+                );
+
+            setUserProduct(response.data);
+
+            // Refresh cached dashboard insights.
+            clearDashboardAICache();
+
+            setShowEditTarget(false);
+            setTargetSuccess("Target price updated successfully.");
+        } catch (error: any) {
+            if (error.response?.status === 401) {
+                return;
+            }
+
+            setTargetError(
+                error.response?.data?.message ||
+                "Failed to update target price."
+            );
+        } finally {
+            setUpdatingTarget(false);
+        }
+    };
 
     const handleUntrack = async () => {
         try {
@@ -236,12 +287,12 @@ const ProductDetailPage = () => {
                         <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
                             <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
                                 {/* Product image */}
-                                <div className="flex min-h-[280px] items-center justify-center bg-[#f5f8f6] p-8 md:min-h-[400px]">
+                                <div className="flex min-h-70 items-center justify-center bg-[#f5f8f6] p-8 md:min-h-100">
                                     {product.imageUrl ? (
                                         <img
                                             src={product.imageUrl}
                                             alt={product.title}
-                                            className="max-h-[340px] w-full object-contain"
+                                            className="max-h-85 w-full object-contain"
                                         />
                                     ) : (
                                         <div className="flex flex-col items-center gap-3 text-slate-300">
@@ -262,8 +313,8 @@ const ProductDetailPage = () => {
 
                                         <span
                                             className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize ${product.trackingState === "in_stock"
-                                                    ? "bg-emerald-50 text-emerald-700"
-                                                    : "bg-red-50 text-red-600"
+                                                ? "bg-emerald-50 text-emerald-700"
+                                                : "bg-red-50 text-red-600"
                                                 }`}
                                         >
                                             {product.trackingState.replace("_", " ")}
@@ -285,8 +336,8 @@ const ProductDetailPage = () => {
                                         </p>
                                     </div>
 
-                                    <div className="mt-7 grid grid-cols-2 gap-3">
-                                        <div className="rounded-2xl bg-emerald-50 p-4">
+                                    <div className="rounded-2xl bg-emerald-50 p-4">
+                                        <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 text-emerald-700">
                                                 <Target size={16} />
                                                 <span className="text-xs font-semibold">
@@ -294,31 +345,38 @@ const ProductDetailPage = () => {
                                                 </span>
                                             </div>
 
-                                            <p className="mt-2 text-lg font-bold text-emerald-900">
-                                                {product.currency}{" "}
-                                                {formatPrice(targetPrice)}
-                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setNewTargetPrice(
+                                                        userProduct.targetPrice?.toString() || ""
+                                                    );
+                                                    setTargetError("");
+                                                    setTargetSuccess("");
+                                                    setShowEditTarget(true);
+                                                }}
+                                                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                            >
+                                                <Pencil size={13} />
+                                                Edit
+                                            </button>
                                         </div>
 
-                                        <div className="rounded-2xl bg-slate-50 p-4">
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <IndianRupee size={16} />
-                                                <span className="text-xs font-semibold">
-                                                    Difference
-                                                </span>
-                                            </div>
-
-                                            <p className="mt-2 text-lg font-bold text-slate-900">
-                                                {product.currency}{" "}
-                                                {formatPrice(distanceFromTarget)}
-                                            </p>
-                                        </div>
+                                        <p className="mt-2 text-lg font-bold text-emerald-900">
+                                            {product.currency} {formatPrice(targetPrice)}
+                                        </p>
                                     </div>
+
+                                    {targetSuccess && (
+                                        <p className="mt-3 text-sm font-medium text-emerald-700">
+                                            {targetSuccess}
+                                        </p>
+                                    )}
 
                                     <div
                                         className={`mt-4 flex items-start gap-2 rounded-xl p-3 text-sm ${targetReached
-                                                ? "bg-emerald-50 text-emerald-700"
-                                                : "bg-amber-50 text-amber-700"
+                                            ? "bg-emerald-50 text-emerald-700"
+                                            : "bg-amber-50 text-amber-700"
                                             }`}
                                     >
                                         {targetReached ? (
@@ -458,9 +516,93 @@ const ProductDetailPage = () => {
                 </main>
             </div>
 
+            {/* Edit target price modal */}
+            {showEditTarget && (
+                <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="edit-target-title"
+                        className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl md:p-7"
+                    >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                            <Target size={22} />
+                        </div>
+
+                        <h2
+                            id="edit-target-title"
+                            className="mt-5 text-xl font-bold text-slate-950"
+                        >
+                            Edit target price
+                        </h2>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                            Set the price at which you would like to buy this product.
+                        </p>
+
+                        <label
+                            htmlFor="targetPrice"
+                            className="mt-5 block text-sm font-semibold text-slate-700"
+                        >
+                            Target price ({product.currency})
+                        </label>
+
+                        <input
+                            id="targetPrice"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={newTargetPrice}
+                            onChange={(e) => setNewTargetPrice(e.target.value)}
+                            placeholder="Enter target price"
+                            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                        />
+
+                        {targetError && (
+                            <p className="mt-2 text-sm text-red-600">
+                                {targetError}
+                            </p>
+                        )}
+
+                        <div className="mt-7 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowEditTarget(false);
+                                    setTargetError("");
+                                }}
+                                disabled={updatingTarget}
+                                className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleUpdateTargetPrice}
+                                disabled={updatingTarget}
+                                className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {updatingTarget ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <LoaderCircle
+                                            size={16}
+                                            className="animate-spin"
+                                        />
+                                        Saving...
+                                    </span>
+                                ) : (
+                                    "Save target"
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Untrack confirmation modal */}
             {showUntrackConfirm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+                <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
                     <div
                         role="dialog"
                         aria-modal="true"
@@ -547,7 +689,7 @@ const StatCard = ({ title, value, icon, color }: StatCardProps) => {
                 </div>
             </div>
 
-            <p className="mt-4 break-words text-2xl font-bold tracking-tight text-slate-950">
+            <p className="mt-4 wrap-break-word text-2xl font-bold tracking-tight text-slate-950">
                 {value}
             </p>
         </div>
@@ -634,7 +776,7 @@ const PriceChart = ({ priceHistory, currency }: PriceChartProps) => {
             </div>
 
             <div className="overflow-x-auto">
-                <div className="min-w-[520px]">
+                <div className="min-w-130">
                     <svg
                         viewBox={`0 0 ${width} ${height}`}
                         className="h-auto w-full overflow-visible"

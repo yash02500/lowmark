@@ -54,6 +54,24 @@ const findUserProductById = async (
     });
 };
 
+const updateTargetPrice = async (
+    id: number,
+    userId: number,
+    targetPrice: number
+) => {
+    const [updatedCount] = await UserProduct.update(
+        { targetPrice },
+        {
+            where: {
+                id,
+                userId,
+            },
+        }
+    );
+
+    return updatedCount;
+};
+
 const deleteUserProduct = async (
     id: number,
     userId: number
@@ -96,6 +114,7 @@ export default {
     findUserProduct,
     findUserProducts,
     findUserProductById,
+    updateTargetPrice,
     deleteUserProduct,
     findActiveUserProducts,
     findActiveUserProductsByProductId,

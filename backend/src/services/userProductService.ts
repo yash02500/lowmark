@@ -57,6 +57,33 @@ const getTrackedProductById = async (
     return userProduct;
 };
 
+const updateTargetPrice = async (
+    id: number,
+    userId: number,
+    targetPrice: number
+) => {
+    const userProduct =
+        await userProductRepository.findUserProductById(
+            id,
+            userId
+        );
+
+    if (!userProduct) {
+        throw new Error("Tracked product not found");
+    }
+
+    await userProductRepository.updateTargetPrice(
+        id,
+        userId,
+        targetPrice
+    );
+
+    return await userProductRepository.findUserProductById(
+        id,
+        userId
+    );
+};
+
 const untrackProduct = async (
     id: number,
     userId: number
@@ -83,5 +110,6 @@ export default {
     trackProduct,
     getTrackedProducts,
     getTrackedProductById,
+    updateTargetPrice,
     untrackProduct,
 };

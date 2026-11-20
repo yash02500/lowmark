@@ -67,7 +67,7 @@ const generateWithGemini = async (
     }
 
     const model = gemini.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.5-flash-lite",
         systemInstruction: instructions,
     });
 

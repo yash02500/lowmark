@@ -64,6 +64,18 @@ const trackProduct = async (
     return response.data;
 };
 
+const updateTargetPrice = async (
+    id: number,
+    targetPrice: number
+) => {
+    const response = await api.put(
+        `/user-products/${id}/target-price`,
+        { targetPrice }
+    );
+
+    return response.data;
+};
+
 const untrackProduct = async (id: number) => {
     const response = await api.delete(
         `/user-products/${id}`
@@ -80,5 +92,6 @@ export default {
     getProductInsightById,
     getPriceHistory,
     trackProduct,
+    updateTargetPrice,
     untrackProduct,
 };
